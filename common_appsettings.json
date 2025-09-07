@@ -1,0 +1,25 @@
+{
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console"
+      }
+    ],
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
+  },
+
+  "AllowedHosts": "*",
+
+  "JWT": {
+    "Issuer": "https://localhost:7093",
+    "Audience": "https://localhost:7093",
+    "SigningKey": "aItJvfiKncas5grVghZ54Kb2zUyrgwMY"
+  }
+}
