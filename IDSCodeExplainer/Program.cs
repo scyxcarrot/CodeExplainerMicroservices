@@ -52,7 +52,7 @@ var embeddingGenerator = new OllamaApiClient(
     "nomic-embed-text:latest");
 builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
-var vectorStorePath = Path.Combine(AppContext.BaseDirectory, "vector-store.db");
+var vectorStorePath = Path.Combine(AppContext.BaseDirectory, "VectorStore.db");
 var vectorStoreConnectionString = $"Data Source={vectorStorePath}";
 builder.Services.AddSqliteCollection<string, IngestedChunk>("data-IDSCodeExplainer-chunks", vectorStoreConnectionString);
 builder.Services.AddSqliteCollection<string, IngestedDocument>("data-IDSCodeExplainer-documents", vectorStoreConnectionString);
