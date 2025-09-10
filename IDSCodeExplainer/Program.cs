@@ -1,7 +1,7 @@
 using System.ClientModel;
 
 using IDSCodeExplainer.Services;
-
+using IDSCodeExplainer.Services.Ingestion;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.AI;
 using Microsoft.IdentityModel.Tokens;
@@ -52,6 +52,14 @@ var embeddingGenerator = new OllamaApiClient(
     "nomic-embed-text:latest");
 builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
+var vectorStorePath = Path.Combine(AppContext.BaseDirectory, "vector-store.db");
+var vectorStoreConnectionString = $"Data Source={vectorStorePath}";
+builder.Services.AddSqliteCollection<string, IngestedChunk>("data-chatapp1-chunks", vectorStoreConnectionString);
+builder.Services.AddSqliteCollection<string, IngestedDocument>("data-chatapp1-documents", vectorStoreConnectionString);
+
+builder.Services.AddScoped<DataIngestor>();
+builder.Services.AddSingleton<SemanticSearch>();
+
 builder.Host.UseSerilog((context, configuration) =>
 {
     configuration.ReadFrom.Configuration(context.Configuration);
@@ -100,5 +108,13 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// By default, we ingest PDF files from the /wwwroot/Data directory. You can ingest from
+// other sources by implementing IIngestionSource.
+// Important: ensure that any content you ingest is trusted, as it may be reflected back
+// to users or could be a source of prompt injection risk.
+await DataIngestor.IngestDataAsync(
+    app.Services,
+    new CodeFileDirectorySource(Path.Combine(builder.Environment.WebRootPath, "Data")));
 
 app.Run();
