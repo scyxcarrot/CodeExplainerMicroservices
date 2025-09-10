@@ -103,10 +103,9 @@ public class RecursiveCodeSplitter
 
         // Determine if the current separator (like '}' or ';') should be included in the chunk.
         // This is important for C# code structure to keep logical units together.
-        //bool shouldKeepSeparator = currentSeparator == "}" || 
-        //                           currentSeparator == "{" || 
-        //                           currentSeparator == ";";
-        var shouldKeepSeparator = true;
+        bool shouldKeepSeparator = currentSeparator == "}" ||
+                                   currentSeparator == "{" ||
+                                   currentSeparator == ";";
 
         List<string> parts = new List<string>();
         int lastIndex = 0;
