@@ -9,6 +9,20 @@ using UserService.Repositories;
 using UserService.Service;
 
 var builder = WebApplication.CreateBuilder(args);
+var contentRootPath = builder.Environment.ContentRootPath;
+var parentPath = Directory.GetParent(contentRootPath);
+// Load the shared configuration first
+builder.Configuration.AddJsonFile(
+    Path.Combine(parentPath.FullName, "common_appsettings.json"),
+    optional: true,
+    reloadOnChange: true);
+
+// Then, load the local appsettings.json.
+// This allows local settings to override shared ones.
+builder.Configuration.AddJsonFile(
+    "appsettings.json",
+    optional: false,
+    reloadOnChange: true);
 
 // Add services to the container.
 builder.Host.UseSerilog((context, configuration) =>

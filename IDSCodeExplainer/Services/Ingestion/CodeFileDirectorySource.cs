@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using CodeExplainer.Services;
-using CodeExplainer.Services.Ingestion;
+using IDSCodeExplainer.Services;
+using IDSCodeExplainer.Services.Ingestion;
 
 namespace IDSCodeExplainer.Services.Ingestion;
 
