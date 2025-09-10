@@ -15,7 +15,7 @@ public class RecursiveCodeSplitter
     /// <param name="separators">Optional. A list of strings to use as separators, ordered
     /// from the most semantically significant (e.g., paragraphs) to the least (e.g., characters).
     /// If null, default C# syntax-aware separators are used.</param>
-    public RecursiveCodeSplitter(int chunkSize, int chunkOverlap, List<string> separators = null)
+    public RecursiveCodeSplitter(int chunkSize, int chunkOverlap, List<string>? separators = null)
     {
         _chunkSize = chunkSize;
         _chunkOverlap = chunkOverlap;
@@ -23,8 +23,8 @@ public class RecursiveCodeSplitter
         // The order is crucial: try to break on major structural elements first.
         _separators = separators ?? new List<string>
         {
-            //"\n\n", // Blank lines (often separating major code blocks like classes, methods, regions)
-            //"\n",   // Newlines (for individual lines of code)
+            "\n\n", // Blank lines (often separating major code blocks like classes, methods, regions)
+            "\n",   // Newlines (for individual lines of code)
             "{", // Start of code blocks (methods, classes, if/for/while blocks). Keeping this helps
             // ensure a closing brace stays with its block content.
             "}", // End of code blocks (methods, classes, if/for/while blocks). Keeping this helps

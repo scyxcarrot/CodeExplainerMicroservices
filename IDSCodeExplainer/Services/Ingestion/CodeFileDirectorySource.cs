@@ -1,7 +1,5 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using IDSCodeExplainer.Services;
-using IDSCodeExplainer.Services.Ingestion;
 
 namespace IDSCodeExplainer.Services.Ingestion;
 
@@ -11,7 +9,7 @@ public class CodeFileDirectorySource(string sourceDirectory) : IIngestionSource
 
     public string SourceId => $"{nameof(CodeFileDirectorySource)}:{sourceDirectory}";
 
-    public string SourceFileHashsum(string filePath)
+    private static string SourceFileHashsum(string filePath)
     {
         using var md5 = MD5.Create();
         using var stream = File.OpenRead(filePath);
@@ -27,11 +25,11 @@ public class CodeFileDirectorySource(string sourceDirectory) : IIngestionSource
         foreach (var sourceFile in sourceFiles)
         {
             var sourceFileId = SourceFileId(sourceFile);
-            var sourceFileVersion = SourceFileHashsum(sourceFile);
-            var existingDocumentVersion = existingDocumentsById.TryGetValue(sourceFileId, out var existingDocument) ? existingDocument.DocumentVersion : null;
-            if (existingDocumentVersion != sourceFileVersion)
+            var sourceFileHashsum = SourceFileHashsum(sourceFile);
+            var existingDocumentHashsum = existingDocumentsById.TryGetValue(sourceFileId, out var existingDocument) ? existingDocument.DocumentVersion : null;
+            if (existingDocumentHashsum != sourceFileHashsum)
             {
-                results.Add(new() { Key = Guid.CreateVersion7().ToString(), SourceId = SourceId, DocumentId = sourceFileId, DocumentVersion = sourceFileVersion });
+                results.Add(new() { Key = Guid.CreateVersion7().ToString(), SourceId = SourceId, DocumentId = sourceFileId, DocumentVersion = sourceFileHashsum });
             }
         }
 
@@ -59,26 +57,6 @@ public class CodeFileDirectorySource(string sourceDirectory) : IIngestionSource
             Text = splitCodeString
         });
 
-        //var lines = File.ReadAllLines(filePath);
-        //var chunks = new List<IngestedChunk>();
-        //int chunkSize = 200;
-        //int chunkIndex = 0;
-
-        //for (int i = 0; i < lines.Length; i += chunkSize)
-        //{
-        //    var chunkLines = lines.Skip(i).Take(chunkSize);
-        //    var chunkText = string.Join(Environment.NewLine, chunkLines);
-
-        //    chunks.Add(new IngestedChunk
-        //    {
-        //        Key = Guid.CreateVersion7().ToString(),
-        //        DocumentId = document.DocumentId,
-        //        Text = chunkText
-        //    });
-
-        //    chunkIndex++;
-        //}
-
-        return Task.FromResult((IEnumerable<IngestedChunk>)chunks);
+        return Task.FromResult(chunks);
     }
 }

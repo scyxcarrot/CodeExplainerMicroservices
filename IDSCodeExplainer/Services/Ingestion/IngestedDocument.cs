@@ -4,7 +4,7 @@ namespace IDSCodeExplainer.Services.Ingestion;
 
 public class IngestedDocument
 {
-    private const int VectorDimensions = 2;
+    private const int VectorDimensions = 768;
     private const string VectorDistanceFunction = DistanceFunction.CosineDistance;
 
     [VectorStoreKey]
@@ -21,5 +21,5 @@ public class IngestedDocument
 
     // The vector is not used but required for some vector databases
     [VectorStoreVector(VectorDimensions, DistanceFunction = VectorDistanceFunction)]
-    public ReadOnlyMemory<float> Vector { get; set; } = new ReadOnlyMemory<float>([0, 0]);
+    public ReadOnlyMemory<float> Vector { get; set; } = new ReadOnlyMemory<float>(new float[VectorDimensions]);
 }
