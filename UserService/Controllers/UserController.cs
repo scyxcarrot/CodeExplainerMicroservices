@@ -53,6 +53,10 @@ namespace UserService.Controllers
                 Token = token,
                 RefreshToken = refreshToken,
             };
+
+            // Send the created user to ChatService by HTTP
+            // this ensures the user is created on that side instantly, it cannot wait
+
             return CreatedAtRoute(nameof(GetUserById),
                 new { userId = appUser.Id }, userReadDTO);
         }

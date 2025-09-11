@@ -113,8 +113,8 @@ app.MapControllers();
 // other sources by implementing IIngestionSource.
 // Important: ensure that any content you ingest is trusted, as it may be reflected back
 // to users or could be a source of prompt injection risk.
-await DataIngestor.IngestDataAsync(
-    app.Services,
-    new CodeFileDirectorySource(Path.Combine(contentRootPath, "Data")));
+//await DataIngestor.IngestDataAsync(
+//    app.Services,
+//    new CodeFileDirectorySource(Path.Combine(contentRootPath, "Data")));
 
 app.Run();

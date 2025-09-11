@@ -1,4 +1,4 @@
-﻿namespace UserService.Common
+﻿namespace CodeExplainerCommon.Responses
 {
     public record ResponseResult(bool Success, string Message)
     {

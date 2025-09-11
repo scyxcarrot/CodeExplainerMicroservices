@@ -31,19 +31,16 @@ namespace IDSCodeExplainer.Controllers
                 ]
             };
 
-            var chatMessages = requestChatMessageDTO.ChatMessages
-                .Select(chatMessageDTO =>
+            var chatMessages = new List<ChatMessage>();
+            foreach (var chatMessageDTO in requestChatMessageDTO.ChatMessages)
+            {
+                if (!ConvertStringToChatRole(chatMessageDTO.ChatRole, out var chatRole))
                 {
-                    if (!Enum.TryParse<ChatRole>(
-                            chatMessageDTO.ChatRole, 
-                            true, 
-                            out var chatRole))
-                    {
-                        throw new ArgumentException($"chatRole = {chatMessageDTO.ChatRole} not recognized");
-                    }
-                    return new ChatMessage(chatRole, chatMessageDTO.TextMessage);
-                })
-                .ToList();
+                    // Instead of throwing an exception, return a BadRequest
+                    return BadRequest($"Invalid ChatRole: {chatMessageDTO.ChatRole}");
+                }
+                chatMessages.Add(new ChatMessage(chatRole, chatMessageDTO.TextMessage));
+            }
 
             // Add the system prompt at the beginning of the message list
             chatMessages.Insert(0, new ChatMessage(ChatRole.System, SystemPrompt));
@@ -56,7 +53,8 @@ namespace IDSCodeExplainer.Controllers
             {
                 ChatMessaage = new ChatMessageDTO()
                 {
-                    TextMessage = chatResponse.Text
+                    ChatRole = "Assistant",
+                    TextMessage = chatResponse.Text,
                 }
             };
 
@@ -64,6 +62,20 @@ namespace IDSCodeExplainer.Controllers
             // RabbitMQ has FIFO as long as we have 1 consumer, so it is ok to send like this
             
             return Ok(responseChatMessageDTO);
+        }
+
+        private bool ConvertStringToChatRole(string chatRoleString, out ChatRole chatRole)
+        {
+            chatRole = chatRoleString.ToLowerInvariant() switch
+            {
+                "user" => ChatRole.User,
+                "assistant" => ChatRole.Assistant,
+                "system" => ChatRole.System,
+                "tool" => ChatRole.Tool,
+                _ => default // Default case for unknown strings
+            };
+
+            return chatRole != default;
         }
 
         /// <summary>

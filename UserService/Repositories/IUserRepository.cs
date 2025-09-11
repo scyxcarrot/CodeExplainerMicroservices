@@ -1,4 +1,4 @@
-﻿using UserService.Common;
+﻿using CodeExplainerCommon.Responses;
 using UserService.Models;
 
 namespace UserService.Repositories
