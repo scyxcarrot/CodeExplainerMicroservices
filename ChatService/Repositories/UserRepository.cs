@@ -23,16 +23,8 @@ namespace ChatService.Repositories
             var dbContext = await dbContextFactory.CreateDbContextAsync();
             var appUserFound = await dbContext.AppUsers
                 .AsNoTracking()
+                .Include(user => user.Chats)
                 .FirstOrDefaultAsync(user => user.ExternalId == externalUserId);
-            return appUserFound;
-        }
-
-        public async Task<AppUser?> GetUserById(Guid userId)
-        {
-            var dbContext = await dbContextFactory.CreateDbContextAsync();
-            var appUserFound = await dbContext.AppUsers
-                .AsNoTracking()
-                .FirstOrDefaultAsync(user => user.Id == userId);
             return appUserFound;
         }
 

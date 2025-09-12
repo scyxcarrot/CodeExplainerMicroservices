@@ -7,7 +7,6 @@ namespace ChatService.Repositories
     {
         public Task<ResponseResult> CreateUser(AppUser appUser);
         public Task<AppUser?> GetUserByExternalId(string externalUserId);
-        public Task<AppUser?> GetUserById(Guid userId);
         public Task<ResponseResult> DeleteUserByExternalId(string externalUserId);
     }
 }

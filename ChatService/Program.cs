@@ -1,8 +1,12 @@
 using ChatService.DbContexts;
 using ChatService.Repositories;
+
+using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,6 +65,29 @@ builder.Services.AddAuthentication(options =>
                     builder.Configuration["JWT:SigningKey"])),
 
         };
+    });
+
+builder.Services.AddMassTransit(
+    busRegistrationConfigurator =>
+    {
+        busRegistrationConfigurator.SetKebabCaseEndpointNameFormatter();
+        busRegistrationConfigurator.AddConsumers(typeof(Program).Assembly);
+
+        busRegistrationConfigurator.UsingRabbitMq((context, cfg) =>
+        {
+            var rabbitMQHost = builder.Configuration["RabbitMQHost"];
+            var rabbitMQPort = ushort.Parse(builder.Configuration["RabbitMQPort"]);
+            cfg.Host(
+                rabbitMQHost,
+                rabbitMQPort,
+                "/",
+                h =>
+                {
+                    h.Username(builder.Configuration["RabbitMQUsername"]);
+                    h.Password(builder.Configuration["RabbitMQPassword"]);
+                });
+            cfg.ConfigureEndpoints(context);
+        });
     });
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

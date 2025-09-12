@@ -122,7 +122,7 @@ namespace UserService.Controllers
         }
 
         [Authorize]
-        [HttpPatch("Details/{userId}")]
+        [HttpPatch("{userId}")]
         public async Task<ActionResult<UserReadDTO>> UpdateUser(
             string userId, 
             UpdateUserDTO updateUserDTO)

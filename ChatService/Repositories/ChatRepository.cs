@@ -18,9 +18,15 @@ namespace ChatService.Repositories
                 $"Chat {chat.Title} created");
         }
 
-        public async Task<IEnumerable<Chat>> GetAllChatsByUserId(Guid userId)
+        public async Task<IEnumerable<Chat>> GetAllChatsByUserExternalId(string userExternalId)
         {
             var dbContext = await dbContextFactory.CreateDbContextAsync();
+            var userId = await dbContext.AppUsers
+                .AsNoTracking()
+                .Where(u => u.ExternalId == userExternalId)
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var chatsFound = dbContext.Chats
                 .AsNoTracking()
                 .Where(chat => chat.UserId == userId)
@@ -33,6 +39,7 @@ namespace ChatService.Repositories
             var dbContext = await dbContextFactory.CreateDbContextAsync();
             var chatFound = await dbContext.Chats
                 .AsNoTracking()
+                .Include(chat=>chat.Messages)
                 .FirstOrDefaultAsync(chat => chat.Id == chatId);
             return chatFound;
         }

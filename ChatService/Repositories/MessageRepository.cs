@@ -27,13 +27,14 @@ namespace ChatService.Repositories
                 $"Message created at {message.TimeStamp}");
         }
 
-        public async Task<IEnumerable<Message>> GetAllMessagesByChatId(Guid chatId)
+        public async Task<Message?> GetMessageById(Guid messageId)
         {
             var dbContext = await dbContextFactory.CreateDbContextAsync();
-            var messages = dbContext.Messages.AsNoTracking()
-                .Where(m => m.ChatId == chatId)
-                .OrderBy(m => m.TimeStamp);
-            return messages;
+            var messageFound = await dbContext.Messages
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == messageId);
+
+            return messageFound;
         }
 
         public async Task<ResponseResult> UpdateMessage(Message message)
