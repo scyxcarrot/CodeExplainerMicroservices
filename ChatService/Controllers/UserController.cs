@@ -39,13 +39,14 @@ namespace ChatService.Controllers
             {
                 Id = appUser.Id,
                 ExternalId = appUser.ExternalId,
-                ChatIds = appUser.Chats.Select(chat=>chat.Id),
+                ChatIds = appUser.Chats?.Select(chat=>chat.Id),
             };
 
             return CreatedAtRoute(nameof(GetUserByExternalId),
                 new { userId = appUser.Id }, userReadDTO);
         }
 
+        [Authorize]
         [HttpDelete("{externalUserId}")]
         public async Task<IActionResult> DeleteUserByExternalId(string externalUserId)
         {

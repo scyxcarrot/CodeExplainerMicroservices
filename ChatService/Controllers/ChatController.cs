@@ -55,7 +55,7 @@ namespace ChatService.Controllers
         public async Task<ActionResult<ChatReadDTO>> Create(ChatCreateDTO chatCreateDTO)
         {
             var chat = chatCreateDTO.ToModel();
-            var result = await chatRepository.CreateChat(chat);
+            var result = await chatRepository.CreateChat(chat, chatCreateDTO.UserId);
             if (!result.Success)
             {
                 return StatusCode(500, result.Message);

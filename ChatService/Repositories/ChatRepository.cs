@@ -9,9 +9,16 @@ namespace ChatService.Repositories
 {
     public class ChatRepository(IDbContextFactory<ChatDbContext> dbContextFactory) : IChatRepository
     {
-        public async Task<ResponseResult> CreateChat(Chat chat)
+        public async Task<ResponseResult> CreateChat(Chat chat, string externalUserId)
         {
             var dbContext = await dbContextFactory.CreateDbContextAsync();
+            var userFound = await dbContext.AppUsers.FirstAsync(user=>user.ExternalId ==  externalUserId);
+            if (userFound == null) 
+            { 
+                return new ResponseResult(false, "User Id not found"); 
+            }
+            chat.UserId = userFound.Id;
+
             await dbContext.Chats.AddAsync(chat);
             await dbContext.SaveChangesAsync();
             return new ResponseResult(true,

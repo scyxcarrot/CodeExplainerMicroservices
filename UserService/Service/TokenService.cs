@@ -38,7 +38,7 @@ namespace UserService.Service
 
             var tokenDescriptor = new SecurityTokenDescriptor()
             {
-                Expires = DateTime.Now.AddMinutes(5),
+                Expires = DateTime.UtcNow.AddMinutes(5),
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = credentials,
                 Issuer = configuration["JWT:Issuer"],

@@ -4,6 +4,7 @@ namespace UserService.HttpClients
 {
     public interface IChatServiceClient
     {
-        Task NotifyUserCreated(UserCreatedDTO userCreatedDTO);
+        Task<bool> NotifyUserCreated(UserCreatedDTO userCreatedDTO);
+        Task<bool> NotifyUserDeleted(string userId);
     }
 }

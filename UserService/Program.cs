@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using UserService.DbContexts;
+using UserService.DelegatingHandlers;
 using UserService.HttpClients;
 using UserService.Models;
 using UserService.Repositories;
@@ -33,10 +34,11 @@ builder.Configuration.AddJsonFile(
 
 
 // Add http clients
+builder.Services.AddTransient<AuthorizationDelegatingHandler>();
 builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ChatServiceUrl"]);
-});
+}).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
 
 // Add services to the container.
 builder.Host.UseSerilog((context, configuration) =>

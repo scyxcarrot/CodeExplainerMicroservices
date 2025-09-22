@@ -16,7 +16,7 @@ namespace UserService.Controllers
     public class UserController(
         ITokenService tokenService,
         IUserRepository userRepository,
-        ChatServiceClient chatServiceClient) : ControllerBase
+        IChatServiceClient chatServiceClient) : ControllerBase
     {
         [Authorize]
         [HttpGet("{userId}", Name = "GetUserById")]
@@ -197,8 +197,26 @@ namespace UserService.Controllers
                 return BadRequest(result.Message);
             }
 
-            await tokenService.DeleteRefreshToken(userId);
-            return NoContent();
+            var deleteTokenSuccess = await tokenService.DeleteRefreshToken(userId);
+
+            // Send the deleted user to ChatService by HTTP
+            // this ensures the user is deleted on that side instantly, it cannot wait
+            var deleteUserInChatServiceSuccess = await chatServiceClient.NotifyUserDeleted(userId);
+            if (deleteUserInChatServiceSuccess && deleteTokenSuccess)
+            {
+                return NoContent();
+            }
+
+            var failureMessage = "User deleted, but related data could not be removed: ";
+            if (!deleteTokenSuccess)
+            {
+                failureMessage += "Failed to delete refresh token; ";
+            }
+            if (!deleteUserInChatServiceSuccess)
+            {
+                failureMessage += "Failed to notify ChatService of user deletion;";
+            }
+            return BadRequest(failureMessage);
         }
     }
 }
