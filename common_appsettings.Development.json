@@ -1,0 +1,4 @@
+{
+  "RabbitMQHost": "localhost",
+  "ChatServiceUrl": "https://localhost:7272"
+}

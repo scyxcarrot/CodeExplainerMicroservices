@@ -20,9 +20,15 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 var contentRootPath = builder.Environment.ContentRootPath;
 var parentPath = Directory.GetParent(contentRootPath);
-// Load the shared configuration first
+// Load the production configuration first
 builder.Configuration.AddJsonFile(
     Path.Combine(parentPath.FullName, "common_appsettings.json"),
+    optional: true,
+    reloadOnChange: true);
+
+// load the development configuration to override it
+builder.Configuration.AddJsonFile(
+    Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
     optional: true,
     reloadOnChange: true);
 
@@ -36,9 +42,7 @@ builder.Configuration.AddJsonFile(
 // Add http clients
 builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
 {
-    client.BaseAddress = builder.Environment.IsProduction() ?
-        new Uri(builder.Configuration["ChatServiceProdUrl"]) :
-        new Uri(builder.Configuration["ChatServiceDevUrl"]);
+    client.BaseAddress = new Uri(builder.Configuration["ChatServiceUrl"]);
 });
 
 // model for chat service, switch as needed

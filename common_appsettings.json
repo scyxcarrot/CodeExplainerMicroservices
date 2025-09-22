@@ -28,7 +28,5 @@
   "RabbitMQUsername": "guest",
   "RabbitMQPassword": "guest",
 
-  "ChatServiceDevUrl": "https://localhost:7272",
-  "ChatServiceProdUrl": "http://chat-clusterip-service:8080"
-
+  "ChatServiceUrl": "http://chat-clusterip-service:8080"
 }
