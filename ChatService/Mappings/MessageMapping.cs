@@ -12,6 +12,8 @@ namespace ChatService.Mappings
                 ChatId = messageCreateDTO.ChatId,
                 ChatRole = messageCreateDTO.ChatRole,
                 TextMessage = messageCreateDTO.TextMessage,
+                MessageOrder = messageCreateDTO.MessageOrder,
+                TimeStamp = DateTime.UtcNow,
             };
         }
 
