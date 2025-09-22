@@ -1,7 +1,7 @@
 ﻿using ChatService.Mappings;
 using ChatService.Models;
 using ChatService.Repositories;
-
+using CodeExplainerCommon.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

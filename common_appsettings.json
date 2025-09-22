@@ -21,5 +21,14 @@
     "Issuer": "https://localhost:7093",
     "Audience": "https://localhost:7093",
     "SigningKey": "aItJvfiKncas5grVghZ54Kb2zUyrgwMY"
-  }
+  },
+
+  "RabbitMQHost": "rabbitmq-clusterip-service",
+  "RabbitMQPort": "5672",
+  "RabbitMQUsername": "guest",
+  "RabbitMQPassword": "guest",
+
+  "ChatServiceDevUrl": "https://localhost:7272",
+  "ChatServiceProdUrl": "http://chat-clusterip-service:8080"
+
 }

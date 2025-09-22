@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ChatService.Models
+namespace CodeExplainerCommon.DTOs
 {
     public class ChatReadDTO
     {

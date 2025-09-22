@@ -1,4 +1,4 @@
-﻿namespace ChatService.Models
+﻿namespace CodeExplainerCommon.DTOs
 {
     public class ChatCreateDTO
     {

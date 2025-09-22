@@ -1,6 +1,7 @@
 ﻿using ChatService.DTOs;
 using ChatService.Mappings;
 using ChatService.Repositories;
+using CodeExplainerCommon.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,9 +26,9 @@ namespace ChatService.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserReadDTO>> Create(UserCreateDTO userCreateDTO)
+        public async Task<ActionResult<UserReadDTO>> Create(UserCreatedDTO userCreatedDTO)
         {
-            var appUser = userCreateDTO.ToModel();
+            var appUser = userCreatedDTO.ToModel();
             var result = await userRepository.CreateUser(appUser);
             if (!result.Success)
             {
@@ -40,9 +41,6 @@ namespace ChatService.Controllers
                 ExternalId = appUser.ExternalId,
                 ChatIds = appUser.Chats.Select(chat=>chat.Id),
             };
-
-            // Send the created user to ChatService by HTTP
-            // this ensures the user is created on that side instantly, it cannot wait
 
             return CreatedAtRoute(nameof(GetUserByExternalId),
                 new { userId = appUser.Id }, userReadDTO);

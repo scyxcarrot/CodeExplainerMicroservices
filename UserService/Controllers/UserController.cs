@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using CodeExplainerCommon.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using UserService.Constants;
 using UserService.DTOs;
+using UserService.HttpClients;
 using UserService.Mappings;
 using UserService.Repositories;
 using UserService.Service;
@@ -13,7 +15,8 @@ namespace UserService.Controllers
     [Route("api/v1/[controller]")]
     public class UserController(
         ITokenService tokenService,
-        IUserRepository userRepository) : ControllerBase
+        IUserRepository userRepository,
+        ChatServiceClient chatServiceClient) : ControllerBase
     {
         [Authorize]
         [HttpGet("{userId}", Name = "GetUserById")]
@@ -56,7 +59,8 @@ namespace UserService.Controllers
 
             // Send the created user to ChatService by HTTP
             // this ensures the user is created on that side instantly, it cannot wait
-
+            var userCreated = new UserCreatedDTO { Id = appUser.Id };
+            await chatServiceClient.NotifyUserCreated(userCreated);
             return CreatedAtRoute(nameof(GetUserById),
                 new { userId = appUser.Id }, userReadDTO);
         }

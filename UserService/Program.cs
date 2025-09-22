@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using UserService.DbContexts;
+using UserService.HttpClients;
 using UserService.Models;
 using UserService.Repositories;
 using UserService.Service;
@@ -23,6 +24,14 @@ builder.Configuration.AddJsonFile(
     "appsettings.json",
     optional: false,
     reloadOnChange: true);
+
+// Add http clients
+builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
+{
+    client.BaseAddress = builder.Environment.IsProduction() ? 
+        new Uri(builder.Configuration["ChatServiceProdUrl"]) : 
+        new Uri(builder.Configuration["ChatServiceDevUrl"]);
+});
 
 // Add services to the container.
 builder.Host.UseSerilog((context, configuration) =>

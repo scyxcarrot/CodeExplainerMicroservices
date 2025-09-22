@@ -1,3 +1,4 @@
+using ChatService.Consumers;
 using ChatService.DbContexts;
 using ChatService.Repositories;
 
@@ -71,7 +72,7 @@ builder.Services.AddMassTransit(
     busRegistrationConfigurator =>
     {
         busRegistrationConfigurator.SetKebabCaseEndpointNameFormatter();
-        busRegistrationConfigurator.AddConsumers(typeof(Program).Assembly);
+        busRegistrationConfigurator.AddConsumer<ChatCreateConsumer>();
 
         busRegistrationConfigurator.UsingRabbitMq((context, cfg) =>
         {

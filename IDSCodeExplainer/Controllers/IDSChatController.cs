@@ -1,7 +1,12 @@
 ﻿using System.ComponentModel;
 
+using CodeExplainerCommon.DTOs;
+
 using IDSCodeExplainer.DTOs;
+using IDSCodeExplainer.HttpClients;
 using IDSCodeExplainer.Services;
+
+using MassTransit;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +17,15 @@ namespace IDSCodeExplainer.Controllers
     [ApiController]
     [Route("api/v1/[controller]")]
     public class IDSChatController(
+        ILogger<IDSChatController> logger,
         IConfiguration configuration,
         IChatClient chatClient, 
-        FileService fileService) : ControllerBase
+        FileService fileService,
+        IChatServiceClient chatServiceClient,
+        IBus bus) : ControllerBase
     {
-        private string SystemPrompt => configuration["SystemPrompt"]!;
+        private string MessageSystemPrompt => configuration["MessageSystemPrompt"]!;
+        private string TitleSystemPrompt => configuration["TitleSystemPrompt"]!;
 
         [Authorize]
         [HttpPost]
@@ -43,7 +52,7 @@ namespace IDSCodeExplainer.Controllers
             }
 
             // Add the system prompt at the beginning of the message list
-            chatMessages.Insert(0, new ChatMessage(ChatRole.System, SystemPrompt));
+            chatMessages.Insert(0, new ChatMessage(ChatRole.System, MessageSystemPrompt));
 
             var chatResponse = await chatClient.GetResponseAsync(
                 chatMessages,
@@ -60,8 +69,57 @@ namespace IDSCodeExplainer.Controllers
 
             // send the response to ChatService with rabbitMQ
             // RabbitMQ has FIFO as long as we have 1 consumer, so it is ok to send like this
-            
+            try
+            {
+                var chatMessageCount = requestChatMessageDTO.ChatMessages.Count;
+                var userMessageCreateDTO = new MessageCreateDTO()
+                {
+                    ChatId = requestChatMessageDTO.ChatId,
+                    ChatRole = requestChatMessageDTO.ChatMessages[chatMessageCount - 1].ChatRole,
+                    TextMessage = requestChatMessageDTO.ChatMessages[chatMessageCount - 1].TextMessage,
+                    MessageOrder = chatMessageCount - 1,
+                };
+                await bus.Publish(userMessageCreateDTO);
+
+                var assistantMessageCreateDTO = new MessageCreateDTO()
+                {
+                    ChatId = requestChatMessageDTO.ChatId,
+                    ChatRole = responseChatMessageDTO.ChatMessaage.ChatRole,
+                    TextMessage = responseChatMessageDTO.ChatMessaage.TextMessage,
+                    MessageOrder = chatMessageCount,
+                };
+                await bus.Publish(assistantMessageCreateDTO);
+
+                
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Could not send platform asynchronously {ExMessage}", ex.Message);
+            }
+
             return Ok(responseChatMessageDTO);
+        }
+
+        // User is expected to prompt and get the chat title, then create the chat manually
+        // after that, get the chatId and prompt
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult<ChatReadDTO>> GetChatTitle(
+            RequestChatTitleDTO requestChatTitleDTO)
+        {
+            var chatOptions = new ChatOptions();
+
+            var chatMessages = new List<ChatMessage>();
+            chatMessages.Add(new ChatMessage(ChatRole.System, TitleSystemPrompt));
+            chatMessages.Add(new ChatMessage(ChatRole.User, requestChatTitleDTO.ChatMessage));
+
+            var chatResponse = await chatClient.GetResponseAsync(
+                chatMessages,
+                chatOptions);
+
+            var chatCreateDTO = new ChatCreateDTO() { Title = chatResponse.Text };
+            var chatReadDTO = await chatServiceClient.CreateChat(chatCreateDTO);
+            return Ok(chatReadDTO);
         }
 
         private bool ConvertStringToChatRole(string chatRoleString, out ChatRole chatRole)

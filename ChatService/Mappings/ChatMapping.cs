@@ -1,4 +1,5 @@
 ﻿using ChatService.Models;
+using CodeExplainerCommon.DTOs;
 
 namespace ChatService.Mappings
 {

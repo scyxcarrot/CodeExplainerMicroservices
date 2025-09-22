@@ -1,15 +1,16 @@
 ﻿using ChatService.DTOs;
 using ChatService.Models;
+using CodeExplainerCommon.DTOs;
 
 namespace ChatService.Mappings
 {
     public static class UserMapping
     {
-        public static AppUser ToModel(this UserCreateDTO createUserDTO)
+        public static AppUser ToModel(this UserCreatedDTO userCreatedDTO)
         {
             return new AppUser()
             {
-                ExternalId = createUserDTO.ExternalId,
+                ExternalId = userCreatedDTO.Id,
             };
         }
 

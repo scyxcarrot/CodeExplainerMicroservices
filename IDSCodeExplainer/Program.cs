@@ -1,7 +1,11 @@
 using System.ClientModel;
 
+using IDSCodeExplainer.HttpClients;
 using IDSCodeExplainer.Services;
 using IDSCodeExplainer.Services.Ingestion;
+
+using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.AI;
 using Microsoft.IdentityModel.Tokens;
@@ -28,6 +32,14 @@ builder.Configuration.AddJsonFile(
     "appsettings.json",
     optional: false,
     reloadOnChange: true);
+
+// Add http clients
+builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
+{
+    client.BaseAddress = builder.Environment.IsProduction() ?
+        new Uri(builder.Configuration["ChatServiceProdUrl"]) :
+        new Uri(builder.Configuration["ChatServiceDevUrl"]);
+});
 
 // model for chat service, switch as needed
 var credential = new ApiKeyCredential(builder.Configuration["GitHubModels:Token"] ?? throw new InvalidOperationException("Missing configuration: GitHubModels:Token. configure it at secrets.json"));
@@ -94,6 +106,30 @@ builder.Services.AddAuthentication(options =>
                     builder.Configuration["JWT:SigningKey"])),
 
         };
+    });
+
+builder.Services.AddMassTransit(
+    busRegistrationConfigurator =>
+    {
+        busRegistrationConfigurator.SetKebabCaseEndpointNameFormatter();
+        // Register all
+        //busRegistrationConfigurator.AddConsumers(typeof(Program).Assembly);
+
+        busRegistrationConfigurator.UsingRabbitMq((context, cfg) =>
+        {
+            var rabbitMQHost = builder.Configuration["RabbitMQHost"];
+            var rabbitMQPort = ushort.Parse(builder.Configuration["RabbitMQPort"]);
+            cfg.Host(
+                rabbitMQHost,
+                rabbitMQPort,
+                "/",
+                h =>
+                {
+                    h.Username(builder.Configuration["RabbitMQUsername"]);
+                    h.Password(builder.Configuration["RabbitMQPassword"]);
+                });
+            cfg.ConfigureEndpoints(context);
+        });
     });
 var app = builder.Build();
 

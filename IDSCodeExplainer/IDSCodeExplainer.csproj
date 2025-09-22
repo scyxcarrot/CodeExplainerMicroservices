@@ -27,5 +27,9 @@
   <ItemGroup>
     <Compile Remove="Data\**" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CodeExplainerCommon\CodeExplainerCommon.csproj" />
+  </ItemGroup>
   
 </Project>
