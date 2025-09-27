@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>ad97e0d4-063d-45e4-b4bf-1aa5ecab8e2e</UserSecretsId>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="9.7.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.SqliteVec" Version="1.64.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.64.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="OllamaSharp" Version="5.3.6" />
     <PackageReference Include="OpenAI" Version="2.4.0" />
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />

@@ -10,6 +10,7 @@ using UserService.Models;
 using UserService.Repositories;
 using UserService.Service;
 
+Console.WriteLine("Starting UserService");
 var builder = WebApplication.CreateBuilder(args);
 var contentRootPath = builder.Environment.ContentRootPath;
 var parentPath = Directory.GetParent(contentRootPath);
@@ -102,5 +103,6 @@ app.UseSerilogRequestLogging();
 app.UseAuthorization();
 
 app.MapControllers();
-
+Console.WriteLine("UserService successfully configured");
+Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
 app.Run();

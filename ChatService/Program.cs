@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using Serilog;
 
+Console.WriteLine("Starting ChatService");
 var builder = WebApplication.CreateBuilder(args);
 var contentRootPath = builder.Environment.ContentRootPath;
 var parentPath = Directory.GetParent(contentRootPath);
@@ -114,5 +115,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
+Console.WriteLine("ChatService successfully configured");
+Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
 app.Run();

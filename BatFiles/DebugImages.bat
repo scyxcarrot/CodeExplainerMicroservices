@@ -1,0 +1,3 @@
+podman run -d justinwcy/code_explainer_user_service -p 7093:7093
+podman run -d -e GitHubModelToken=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 justinwcy/code_explainer_ids_code_explainer
+podman run -d justinwcy/code_explainer_chat_service -p 7272:7272

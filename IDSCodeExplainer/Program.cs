@@ -18,6 +18,8 @@ using OpenAI.Chat;
 
 using Serilog;
 
+Console.WriteLine("Starting IDSCodeExplainer");
+
 var builder = WebApplication.CreateBuilder(args);
 var contentRootPath = builder.Environment.ContentRootPath;
 var parentPath = Directory.GetParent(contentRootPath);
@@ -49,7 +51,18 @@ builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
 }).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
 
 // model for chat service, switch as needed
-var credential = new ApiKeyCredential(builder.Configuration["GitHubModels:Token"] ?? throw new InvalidOperationException("Missing configuration: GitHubModels:Token. configure it at secrets.json"));
+ApiKeyCredential credential;
+if (builder.Environment.IsDevelopment())
+{
+    credential = new ApiKeyCredential(builder.Configuration["GitHubModelToken"] ?? 
+        throw new InvalidOperationException("Missing configuration: GitHubModelToken. Configure it at secrets.json"));
+}
+else
+{
+    credential = new ApiKeyCredential(Environment.GetEnvironmentVariable("GitHubModelToken") ?? 
+        throw new InvalidOperationException("Missing configuration: GitHubModelToken. Configure it at podman run -e \"GitHubModelToken=your_token_here\" justinwcy/code_explainer_ids_code_explainer"));
+}
+
 var openAIClientOptions = new OpenAIClientOptions()
 {
     Endpoint = new Uri("https://models.github.ai/inference")
@@ -159,5 +172,6 @@ app.MapControllers();
 //await DataIngestor.IngestDataAsync(
 //    app.Services,
 //    new CodeFileDirectorySource(Path.Combine(contentRootPath, "Data")));
-
+Console.WriteLine("IDSCodeExplainer successfully configured");
+Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
 app.Run();
