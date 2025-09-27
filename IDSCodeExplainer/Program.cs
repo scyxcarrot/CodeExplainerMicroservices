@@ -1,5 +1,6 @@
 using System.ClientModel;
 
+using IDSCodeExplainer.DelegatingHandlers;
 using IDSCodeExplainer.HttpClients;
 using IDSCodeExplainer.Services;
 using IDSCodeExplainer.Services.Ingestion;
@@ -40,10 +41,12 @@ builder.Configuration.AddJsonFile(
     reloadOnChange: true);
 
 // Add http clients
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<AuthorizationDelegatingHandler>();
 builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ChatServiceUrl"]);
-});
+}).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
 
 // model for chat service, switch as needed
 var credential = new ApiKeyCredential(builder.Configuration["GitHubModels:Token"] ?? throw new InvalidOperationException("Missing configuration: GitHubModels:Token. configure it at secrets.json"));

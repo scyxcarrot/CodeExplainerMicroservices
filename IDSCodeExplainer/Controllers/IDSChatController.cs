@@ -28,7 +28,7 @@ namespace IDSCodeExplainer.Controllers
         private string TitleSystemPrompt => configuration["TitleSystemPrompt"]!;
 
         [Authorize]
-        [HttpPost]
+        [HttpPost("Message")]
         public async Task<ActionResult<ResponseChatMessageDTO>> ChatIDSCode(
             RequestChatMessageDTO requestChatMessageDTO)
         {
@@ -103,7 +103,7 @@ namespace IDSCodeExplainer.Controllers
         // User is expected to prompt and get the chat title, then create the chat manually
         // after that, get the chatId and prompt
         [Authorize]
-        [HttpPost]
+        [HttpPost("Title")]
         public async Task<ActionResult<ChatReadDTO>> GetChatTitle(
             RequestChatTitleDTO requestChatTitleDTO)
         {
@@ -117,7 +117,11 @@ namespace IDSCodeExplainer.Controllers
                 chatMessages,
                 chatOptions);
 
-            var chatCreateDTO = new ChatCreateDTO() { Title = chatResponse.Text };
+            var chatCreateDTO = new ChatCreateDTO() 
+            { 
+                Title = chatResponse.Text,
+                UserId = requestChatTitleDTO.UserId,
+            };
             var chatReadDTO = await chatServiceClient.CreateChat(chatCreateDTO);
             return Ok(chatReadDTO);
         }
