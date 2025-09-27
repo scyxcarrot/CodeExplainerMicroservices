@@ -37,6 +37,7 @@ namespace ChatService.Repositories
             var chatsFound = dbContext.Chats
                 .AsNoTracking()
                 .Where(chat => chat.UserId == userId)
+                .Include(chat => chat.Messages)
                 .OrderByDescending(c=>c.LastUpdated);
             return chatsFound;
         }

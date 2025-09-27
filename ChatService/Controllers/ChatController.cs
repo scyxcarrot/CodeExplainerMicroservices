@@ -25,7 +25,7 @@ namespace ChatService.Controllers
             return Ok(chat.ToReadDTO());
         }
 
-        [HttpGet("/Chats/User/{userExternalId}")]
+        [HttpGet("User/{userExternalId}")]
         public async Task<ActionResult<IEnumerable<ChatReadDTO>>> GetAllChats(string userExternalId)
         {
             var chats = await chatRepository
