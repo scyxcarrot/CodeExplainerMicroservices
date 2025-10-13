@@ -1,0 +1,3 @@
+docker push justinwcy/code_explainer_user_service
+docker push justinwcy/code_explainer_ids_code_explainer
+docker push justinwcy/code_explainer_chat_service

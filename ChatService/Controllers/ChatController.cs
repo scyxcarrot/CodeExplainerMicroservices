@@ -9,7 +9,7 @@ namespace ChatService.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/ChatService/[controller]")]
     public class ChatController(
         IChatRepository chatRepository) : ControllerBase
     {

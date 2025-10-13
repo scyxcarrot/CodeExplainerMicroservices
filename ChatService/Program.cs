@@ -14,16 +14,9 @@ Console.WriteLine("Starting ChatService");
 var builder = WebApplication.CreateBuilder(args);
 var contentRootPath = builder.Environment.ContentRootPath;
 var parentPath = Directory.GetParent(contentRootPath);
-
 // Load the production configuration first
 builder.Configuration.AddJsonFile(
     Path.Combine(parentPath.FullName, "common_appsettings.json"),
-    optional: true,
-    reloadOnChange: true);
-
-// load the development configuration to override it
-builder.Configuration.AddJsonFile(
-    Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
     optional: true,
     reloadOnChange: true);
 
@@ -33,6 +26,20 @@ builder.Configuration.AddJsonFile(
     "appsettings.json",
     optional: false,
     reloadOnChange: true);
+
+// load the development configuration to override it
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile(
+        Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
+        optional: true,
+        reloadOnChange: true);
+
+    builder.Configuration.AddJsonFile(
+        "appsettings.Development.json",
+        optional: false,
+        reloadOnChange: true);
+}
 
 // Add services to the container.
 builder.Host.UseSerilog((context, configuration) =>
@@ -115,6 +122,19 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<ChatDbContext>>();
+await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+Console.WriteLine("--> Attempting to run migrations");
+try
+{
+    dbContext.Database.Migrate();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error during migration: {ex.Message}");
+}
+
 Console.WriteLine("ChatService successfully configured");
 Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
 app.Run();

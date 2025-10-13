@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+spec:
+  rules:
+    - host: code-explainer.com
+      http:
+        paths:
+          - path: /api/v1/UserService
+            pathType: Prefix
+            backend:
+              service:
+                name: user-clusterip-service
+                port:
+                  number: 7093
+          - path: /api/v1/ChatService
+            pathType: Prefix
+            backend:
+              service:
+                name: chat-clusterip-service
+                port:
+                  number: 7272
+          - path: /api/v1/IDSCodeExplainer
+            pathType: Prefix
+            backend:
+              service:
+                name: ids-code-explainer-clusterip-service
+                port:
+                  number: 7043

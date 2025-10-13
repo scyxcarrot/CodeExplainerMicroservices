@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ids-code-explainer-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ids-code-explainer
+  template:
+    metadata:
+      labels:
+        app: ids-code-explainer
+    spec:
+      containers:
+        - name: ids-code-explainer
+          image: justinwcy/code_explainer_ids_code_explainer:latest
+          env:
+          - name: GitHubModelToken
+            valueFrom:
+              secretKeyRef:
+                name: github-model-token
+                key: GitHubModelToken
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ids-code-explainer-clusterip-service
+spec:
+  type: ClusterIP
+  selector: 
+    app: ids-code-explainer
+  ports:
+  - name: ids-code-explainer
+    protocol: TCP
+    port: 7043
+    targetPort: 7043

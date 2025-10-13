@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+    spec:
+      containers:
+        - name: chat-service
+          image: justinwcy/code_explainer_chat_service:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-clusterip-service
+spec:
+  type: ClusterIP
+  selector: 
+    app: chat-service
+  ports:
+  - name: chat-service
+    protocol: TCP
+    port: 7272
+    targetPort: 7272

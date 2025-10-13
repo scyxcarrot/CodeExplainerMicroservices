@@ -15,7 +15,7 @@ using Microsoft.Extensions.AI;
 namespace IDSCodeExplainer.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/IDSCodeExplainer/[controller]")]
     public class IDSChatController(
         ILogger<IDSChatController> logger,
         IConfiguration configuration,
@@ -89,8 +89,6 @@ namespace IDSCodeExplainer.Controllers
                     MessageOrder = chatMessageCount,
                 };
                 await bus.Publish(assistantMessageCreateDTO);
-
-                
             }
             catch (Exception ex)
             {

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ChatService.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/ChatService/[controller]")]
     public class UserController(
         IUserRepository userRepository) : ControllerBase
     {

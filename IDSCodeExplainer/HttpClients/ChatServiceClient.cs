@@ -14,7 +14,7 @@ namespace IDSCodeExplainer.HttpClients
                 JsonSerializer.Serialize(chatCreateDTO), Encoding.UTF8, "application/json");
 
             var response = await httpClient.PostAsync(
-                "api/v1/Chat",
+                "api/v1/ChatService/Chat",
                 httpContent);
 
             if (response.IsSuccessStatusCode)

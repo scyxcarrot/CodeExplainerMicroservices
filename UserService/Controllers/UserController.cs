@@ -12,7 +12,7 @@ using UserService.Service;
 namespace UserService.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/UserService/[controller]")]
     public class UserController(
         ITokenService tokenService,
         IUserRepository userRepository,
@@ -197,21 +197,15 @@ namespace UserService.Controllers
                 return BadRequest(result.Message);
             }
 
-            var deleteTokenSuccess = await tokenService.DeleteRefreshToken(userId);
-
             // Send the deleted user to ChatService by HTTP
             // this ensures the user is deleted on that side instantly, it cannot wait
             var deleteUserInChatServiceSuccess = await chatServiceClient.NotifyUserDeleted(userId);
-            if (deleteUserInChatServiceSuccess && deleteTokenSuccess)
+            if (deleteUserInChatServiceSuccess)
             {
                 return NoContent();
             }
 
             var failureMessage = "User deleted, but related data could not be removed: ";
-            if (!deleteTokenSuccess)
-            {
-                failureMessage += "Failed to delete refresh token; ";
-            }
             if (!deleteUserInChatServiceSuccess)
             {
                 failureMessage += "Failed to notify ChatService of user deletion;";

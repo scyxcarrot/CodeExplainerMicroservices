@@ -29,18 +29,26 @@ builder.Configuration.AddJsonFile(
     optional: true,
     reloadOnChange: true);
 
-// load the development configuration to override it
-builder.Configuration.AddJsonFile(
-    Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
-    optional: true,
-    reloadOnChange: true);
-
 // Then, load the local appsettings.json.
 // This allows local settings to override shared ones.
 builder.Configuration.AddJsonFile(
     "appsettings.json",
     optional: false,
     reloadOnChange: true);
+
+// load the development configuration to override it
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile(
+        Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
+        optional: true,
+        reloadOnChange: true);
+
+    builder.Configuration.AddJsonFile(
+        "appsettings.Development.json",
+        optional: false,
+        reloadOnChange: true);
+}
 
 // Add http clients
 builder.Services.AddHttpContextAccessor();
@@ -60,7 +68,7 @@ if (builder.Environment.IsDevelopment())
 else
 {
     credential = new ApiKeyCredential(Environment.GetEnvironmentVariable("GitHubModelToken") ?? 
-        throw new InvalidOperationException("Missing configuration: GitHubModelToken. Configure it at podman run -e \"GitHubModelToken=your_token_here\" justinwcy/code_explainer_ids_code_explainer"));
+        throw new InvalidOperationException("Missing configuration: GitHubModelToken. Configure it at docker run -e \"GitHubModelToken=your_token_here\" justinwcy/code_explainer_ids_code_explainer"));
 }
 
 var openAIClientOptions = new OpenAIClientOptions()

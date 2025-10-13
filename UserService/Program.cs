@@ -1,8 +1,13 @@
+using System;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 using Serilog;
+
 using UserService.DbContexts;
 using UserService.DelegatingHandlers;
 using UserService.HttpClients;
@@ -20,12 +25,6 @@ builder.Configuration.AddJsonFile(
     optional: true,
     reloadOnChange: true);
 
-// load the development configuration to override it
-builder.Configuration.AddJsonFile(
-    Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
-    optional: true,
-    reloadOnChange: true);
-
 // Then, load the local appsettings.json.
 // This allows local settings to override shared ones.
 builder.Configuration.AddJsonFile(
@@ -33,6 +32,19 @@ builder.Configuration.AddJsonFile(
     optional: false,
     reloadOnChange: true);
 
+// load the development configuration to override it
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile(
+        Path.Combine(parentPath.FullName, "common_appsettings.Development.json"),
+        optional: true,
+        reloadOnChange: true);
+
+    builder.Configuration.AddJsonFile(
+        "appsettings.Development.json",
+        optional: false,
+        reloadOnChange: true);
+}
 
 // Add http clients
 builder.Services.AddTransient<AuthorizationDelegatingHandler>();
@@ -103,6 +115,19 @@ app.UseSerilogRequestLogging();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<UserDbContext>>();
+await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+Console.WriteLine("--> Attempting to run migrations");
+try
+{
+    dbContext.Database.Migrate();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error during migration: {ex.Message}");
+}
+
 Console.WriteLine("UserService successfully configured");
 Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
 app.Run();

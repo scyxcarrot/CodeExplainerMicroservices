@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: justinwcy/code_explainer_user_service:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-clusterip-service
+spec:
+  type: ClusterIP
+  selector: 
+    app: user-service
+  ports:
+  - name: user-service
+    protocol: TCP
+    port: 7093
+    targetPort: 7093

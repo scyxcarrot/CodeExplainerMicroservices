@@ -16,7 +16,7 @@ namespace UserService.HttpClients
                 JsonSerializer.Serialize(userCreatedDTO), Encoding.UTF8, "application/json");
 
             var response = await httpClient.PostAsync(
-                "api/v1/User",
+                "api/v1/ChatService/User",
                 httpContent);
 
             if (response.IsSuccessStatusCode)
@@ -34,7 +34,7 @@ namespace UserService.HttpClients
         public async Task<bool> NotifyUserDeleted(string userId)
         {
             var response = await httpClient.DeleteAsync(
-                $"api/v1/User/{userId}");
+                $"api/v1/ChatService/User/{userId}");
 
             if (response.IsSuccessStatusCode)
             {
