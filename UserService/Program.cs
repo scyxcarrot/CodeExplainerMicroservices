@@ -1,13 +1,11 @@
 using System;
-
+using CodeExplainerCommon.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Serilog;
-
 using UserService.DbContexts;
 using UserService.DelegatingHandlers;
 using UserService.HttpClients;
@@ -78,12 +76,14 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(
 
 builder.Services.AddAuthentication(options =>
     {
+        // Set ALL defaults to the JWT Bearer scheme
         options.DefaultAuthenticateScheme =
             options.DefaultScheme =
                 options.DefaultSignInScheme =
                     options.DefaultSignOutScheme =
                         options.DefaultChallengeScheme =
                             options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+
     })
     .AddJwtBearer(options =>
     {
@@ -99,6 +99,15 @@ builder.Services.AddAuthentication(options =>
                     builder.Configuration["JWT:SigningKey"])),
 
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies[Token.AccessToken];
+                return Task.CompletedTask;
+            }
+        };
     });
 
 var app = builder.Build();
@@ -112,20 +121,25 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<UserDbContext>>();
-await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-Console.WriteLine("--> Attempting to run migrations");
-try
+using (var scope = app.Services.CreateScope())
 {
-    dbContext.Database.Migrate();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Error during migration: {ex.Message}");
+    var serviceProvider = scope.ServiceProvider;
+    var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<UserDbContext>>();
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+    Console.WriteLine("--> Attempting to run migrations");
+    try
+    {
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during migration: {ex.Message}");
+    }
 }
 
 Console.WriteLine("UserService successfully configured");

@@ -1,32 +1,32 @@
 {
-  "Serilog": {
-    "Using": [ "Serilog.Sinks.Console" ],
-    "MinimumLevel": {
-      "Default": "Information",
-      "Override": {
-        "System": "Warning"
-      }
+    "Serilog": {
+        "Using": ["Serilog.Sinks.Console"],
+        "MinimumLevel": {
+            "Default": "Information",
+            "Override": {
+                "System": "Warning"
+            }
+        },
+        "WriteTo": [
+            {
+                "Name": "Console"
+            }
+        ],
+        "Enrich": ["FromLogContext", "WithMachineName", "WithThreadId"]
     },
-    "WriteTo": [
-      {
-        "Name": "Console"
-      }
-    ],
-    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
-  },
 
-  "AllowedHosts": "*",
+    "AllowedHosts": "*",
 
-  "JWT": {
-    "Issuer": "https://localhost:7093",
-    "Audience": "https://localhost:7093",
-    "SigningKey": "aItJvfiKncas5grVghZ54Kb2zUyrgwMY"
-  },
+    "JWT": {
+        "Issuer": "https://code-explainer.com",
+        "Audience": "https://code-explainer.com",
+        "SigningKey": "aItJvfiKncas5grVghZ54Kb2zUyrgwMY"
+    },
 
-  "RabbitMQHost": "rabbitmq-clusterip-service",
-  "RabbitMQPort": "5672",
-  "RabbitMQUsername": "guest",
-  "RabbitMQPassword": "guest",
+    "RabbitMQHost": "rabbitmq-clusterip-service",
+    "RabbitMQPort": "5672",
+    "RabbitMQUsername": "guest",
+    "RabbitMQPassword": "guest",
 
-  "ChatServiceUrl": "http://chat-clusterip-service:7272"
+    "ChatServiceUrl": "http://chat-clusterip-service:7272"
 }

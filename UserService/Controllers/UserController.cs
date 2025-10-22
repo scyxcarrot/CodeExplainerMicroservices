@@ -1,4 +1,5 @@
-﻿using CodeExplainerCommon.DTOs;
+﻿using CodeExplainerCommon.Constants;
+using CodeExplainerCommon.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,6 +33,7 @@ namespace UserService.Controllers
             return Ok(appUser.ToReadDTO(roles));
         }
 
+        [AllowAnonymous]
         [HttpPost("Register")]
         public async Task<ActionResult<UserReadDTO>> Register(RegisterDTO registerDTO)
         {
@@ -47,14 +49,16 @@ namespace UserService.Controllers
 
             var token = await tokenService.CreateToken(appUser);
             var refreshToken = await tokenService.CreateRefreshToken(appUser);
+
+            // Set the tokens as cookies
+            SetTokenCookies(token, refreshToken);
+
             var userReadDTO = new UserReadDTO()
             {
                 Id = new Guid(appUser.Id),
                 UserName = registerDTO.Username,
                 Email = registerDTO.Email,
                 Roles = registerDTO.Roles,
-                Token = token,
-                RefreshToken = refreshToken,
             };
 
             // Send the created user to ChatService by HTTP
@@ -65,6 +69,7 @@ namespace UserService.Controllers
                 new { userId = appUser.Id }, userReadDTO);
         }
 
+        [AllowAnonymous]
         [HttpPost("Login")]
         public async Task<ActionResult<UserReadDTO>> Login(LoginDTO loginDTO)
         {
@@ -80,17 +85,21 @@ namespace UserService.Controllers
 
             var roles = await userRepository.GetRoles(appUser);
             var userReadDTO = appUser.ToReadDTO(roles);
-            userReadDTO.Token = token;
-            userReadDTO.RefreshToken = refreshToken;
+
+            // Set the tokens as cookies
+            SetTokenCookies(token, refreshToken);
             
             return Ok(userReadDTO);
         }
 
+        [AllowAnonymous]
         [HttpPost("RefreshToken")]
         public async Task<ActionResult<UserReadDTO>> RefreshToken(RefreshDTO refreshDTO)
         {
+            var refreshToken = Request.Cookies[Token.RefreshToken];
+
             var userId = await tokenService.GetUserIdFromRefreshToken(
-                refreshDTO.RefreshToken);
+                refreshToken);
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Invalid refresh token");
@@ -109,16 +118,18 @@ namespace UserService.Controllers
             }
 
             var token = await tokenService.CreateToken(appUser);
-            var refreshToken = await tokenService.CreateRefreshToken(appUser);
+            var newRefreshToken = await tokenService.CreateRefreshToken(appUser);
 
             var roles = await userRepository.GetRoles(appUser);
             var userReadDTO = appUser.ToReadDTO(roles);
-            userReadDTO.Token = token;
-            userReadDTO.RefreshToken = refreshToken;
+
+            // Set the tokens as cookies
+            SetTokenCookies(token, newRefreshToken);
 
             return Ok(userReadDTO);
         }
 
+        [AllowAnonymous]
         [HttpGet("Roles")]
         public ActionResult<IEnumerable<string>> GetAllRoles()
         {
@@ -145,8 +156,9 @@ namespace UserService.Controllers
 
             var roles = await userRepository.GetRoles(appUser);
             var userReadDTO = appUser.ToReadDTO(roles);
-            userReadDTO.Token = token;
-            userReadDTO.RefreshToken = refreshToken;
+
+            // Set the tokens as cookies
+            SetTokenCookies(token, refreshToken);
 
             return Ok(userReadDTO);
         }
@@ -211,6 +223,29 @@ namespace UserService.Controllers
                 failureMessage += "Failed to notify ChatService of user deletion;";
             }
             return BadRequest(failureMessage);
+        }
+
+        private void SetTokenCookies(string token, string refreshToken)
+        {
+            var tokenOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Use Secure in production
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddSeconds(Token.AccessTokenExpiryTime)
+            };
+
+            var refreshTokenOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Use Secure in production
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddSeconds(Token.RefreshTokenExpiryTime)
+            };
+
+            // Set the cookies in the response
+            Response.Cookies.Append(Token.AccessToken, token, tokenOptions);
+            Response.Cookies.Append(Token.RefreshToken, refreshToken, refreshTokenOptions);
         }
     }
 }

@@ -1,7 +1,7 @@
 using ChatService.Consumers;
 using ChatService.DbContexts;
 using ChatService.Repositories;
-
+using CodeExplainerCommon.Constants;
 using MassTransit;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -60,12 +60,14 @@ builder.Services.AddDbContextFactory<ChatDbContext>(
 
 builder.Services.AddAuthentication(options =>
     {
+        // Set ALL defaults to the JWT Bearer scheme
         options.DefaultAuthenticateScheme =
             options.DefaultScheme =
                 options.DefaultSignInScheme =
                     options.DefaultSignOutScheme =
                         options.DefaultChallengeScheme =
                             options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+
     })
     .AddJwtBearer(options =>
     {
@@ -80,6 +82,15 @@ builder.Services.AddAuthentication(options =>
                 System.Text.Encoding.UTF8.GetBytes(
                     builder.Configuration["JWT:SigningKey"])),
 
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies[Token.AccessToken];
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -119,21 +130,28 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<ChatDbContext>>();
-await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-Console.WriteLine("--> Attempting to run migrations");
-try
+using (var scope = app.Services.CreateScope())
 {
-    dbContext.Database.Migrate();
+    var serviceProvider = scope.ServiceProvider;
+    var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<ChatDbContext>>();
+
+    await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+    Console.WriteLine("--> Attempting to run migrations");
+    try
+    {
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during migration: {ex.Message}");
+    }
 }
-catch (Exception ex)
-{
-    Console.WriteLine($"Error during migration: {ex.Message}");
-}
+
 
 Console.WriteLine("ChatService successfully configured");
 Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");

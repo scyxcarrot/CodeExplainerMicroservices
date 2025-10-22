@@ -3,6 +3,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
+using CodeExplainerCommon.Constants;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -38,7 +40,7 @@ namespace UserService.Service
 
             var tokenDescriptor = new SecurityTokenDescriptor()
             {
-                Expires = DateTime.UtcNow.AddMinutes(5),
+                Expires = DateTime.UtcNow.AddSeconds(Token.AccessTokenExpiryTime),
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = credentials,
                 Issuer = configuration["JWT:Issuer"],
@@ -58,7 +60,7 @@ namespace UserService.Service
                 RefreshToken = refreshToken,
                 Id = Guid.NewGuid(),
                 Invalidated = false,
-                RefreshTokenExpiryDate = DateTime.UtcNow.AddDays(7),
+                RefreshTokenExpiryDate = DateTime.UtcNow.AddSeconds(Token.RefreshTokenExpiryTime),
                 UserId = user.Id,
             };
 

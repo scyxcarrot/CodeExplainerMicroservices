@@ -1,5 +1,5 @@
 using System.ClientModel;
-
+using CodeExplainerCommon.Constants;
 using IDSCodeExplainer.DelegatingHandlers;
 using IDSCodeExplainer.HttpClients;
 using IDSCodeExplainer.Services;
@@ -113,12 +113,14 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddAuthentication(options =>
     {
+        // Set ALL defaults to the JWT Bearer scheme
         options.DefaultAuthenticateScheme =
             options.DefaultScheme =
                 options.DefaultSignInScheme =
                     options.DefaultSignOutScheme =
                         options.DefaultChallengeScheme =
                             options.DefaultForbidScheme = JwtBearerDefaults.AuthenticationScheme;
+
     })
     .AddJwtBearer(options =>
     {
@@ -133,6 +135,15 @@ builder.Services.AddAuthentication(options =>
                 System.Text.Encoding.UTF8.GetBytes(
                     builder.Configuration["JWT:SigningKey"])),
 
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies[Token.AccessToken];
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -169,6 +180,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
