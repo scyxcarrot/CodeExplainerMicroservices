@@ -54,9 +54,17 @@ namespace IDSCodeExplainer.Controllers
             // Add the system prompt at the beginning of the message list
             chatMessages.Insert(0, new ChatMessage(ChatRole.System, MessageSystemPrompt));
 
-            var chatResponse = await chatClient.GetResponseAsync(
-                chatMessages,
-                chatOptions);
+            ChatResponse? chatResponse;
+            try
+            {
+                chatResponse = await chatClient.GetResponseAsync(
+                    chatMessages,
+                    chatOptions);
+            }
+            catch (Exception exception)
+            {
+                return BadRequest(exception.Message);
+            }
 
             var responseChatMessageDTO = new ResponseChatMessageDTO()
             {

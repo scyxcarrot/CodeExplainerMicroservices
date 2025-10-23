@@ -33,7 +33,6 @@ namespace UserService.Controllers
             return Ok(appUser.ToReadDTO(roles));
         }
 
-        [AllowAnonymous]
         [HttpPost("Register")]
         public async Task<ActionResult<UserReadDTO>> Register(RegisterDTO registerDTO)
         {
@@ -46,12 +45,6 @@ namespace UserService.Controllers
             {
                 return StatusCode(500, result.Message);
             }
-
-            var token = await tokenService.CreateToken(appUser);
-            var refreshToken = await tokenService.CreateRefreshToken(appUser);
-
-            // Set the tokens as cookies
-            SetTokenCookies(token, refreshToken);
 
             var userReadDTO = new UserReadDTO()
             {
@@ -69,7 +62,6 @@ namespace UserService.Controllers
                 new { userId = appUser.Id }, userReadDTO);
         }
 
-        [AllowAnonymous]
         [HttpPost("Login")]
         public async Task<ActionResult<UserReadDTO>> Login(LoginDTO loginDTO)
         {
@@ -92,7 +84,6 @@ namespace UserService.Controllers
             return Ok(userReadDTO);
         }
 
-        [AllowAnonymous]
         [HttpPost("RefreshToken")]
         public async Task<ActionResult<UserReadDTO>> RefreshToken(RefreshDTO refreshDTO)
         {
@@ -129,7 +120,6 @@ namespace UserService.Controllers
             return Ok(userReadDTO);
         }
 
-        [AllowAnonymous]
         [HttpGet("Roles")]
         public ActionResult<IEnumerable<string>> GetAllRoles()
         {
@@ -223,6 +213,16 @@ namespace UserService.Controllers
                 failureMessage += "Failed to notify ChatService of user deletion;";
             }
             return BadRequest(failureMessage);
+        }
+
+        [Authorize]
+        [HttpPost("Logout")]
+        public ActionResult Logout()
+        {
+            Response.Cookies.Delete(Token.AccessToken);
+            Response.Cookies.Delete(Token.RefreshToken);
+
+            return NoContent();
         }
 
         private void SetTokenCookies(string token, string refreshToken)

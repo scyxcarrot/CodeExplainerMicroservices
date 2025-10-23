@@ -108,6 +108,7 @@ builder.Services.AddAuthentication(options =>
                 return Task.CompletedTask;
             }
         };
+
     });
 
 var app = builder.Build();
