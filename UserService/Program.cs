@@ -51,6 +51,20 @@ builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["ChatServiceUrl"]);
 }).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
 
+var devPolicyName = "DevPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(devPolicyName,
+        policy =>
+        {
+            // Allow requests from your Next.js development URL
+            policy.WithOrigins("https://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
+
 // Add services to the container.
 builder.Host.UseSerilog((context, configuration) =>
 {
@@ -118,6 +132,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseCors(devPolicyName);
 
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();

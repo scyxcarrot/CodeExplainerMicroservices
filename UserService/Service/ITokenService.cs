@@ -8,7 +8,7 @@ namespace UserService.Service
 
         public Task<string> CreateRefreshToken(AppUser user);
 
-        public Task<string> GetUserIdFromRefreshToken(string refreshToken);
+        public Task<string> GetUserIdFromRefreshToken(string? refreshToken);
 
         public Task<bool> DeleteRefreshToken(string userId);
     }

@@ -13,9 +13,9 @@ namespace UserService.Repositories
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager) : IUserRepository
     {
-        public async Task<ResponseResult> Login(string username, string password)
+        public async Task<ResponseResult> Login(string email, string password)
         {
-            var userFound = await userManager.FindByNameAsync(username);
+            var userFound = await userManager.FindByEmailAsync(email);
             if (userFound == null)
             {
                 return new ResponseResult(false, "Login failed");
@@ -111,9 +111,9 @@ namespace UserService.Repositories
             return appUser;
         }
 
-        public async Task<AppUser?> GetUserByUsername(string username)
+        public async Task<AppUser?> GetUserByEmail(string email)
         {
-            var appUser = await userManager.FindByNameAsync(username);
+            var appUser = await userManager.FindByEmailAsync(email);
             return appUser;
         }
 

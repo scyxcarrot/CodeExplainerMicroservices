@@ -65,13 +65,13 @@ namespace UserService.Controllers
         [HttpPost("Login")]
         public async Task<ActionResult<UserReadDTO>> Login(LoginDTO loginDTO)
         {
-            var result = await userRepository.Login(loginDTO.Username, loginDTO.Password);
+            var result = await userRepository.Login(loginDTO.Email, loginDTO.Password);
             if (!result.Success)
             {
                 return BadRequest(result.Message);
             }
 
-            var appUser = await userRepository.GetUserByUsername(loginDTO.Username);
+            var appUser = await userRepository.GetUserByEmail(loginDTO.Email);
             var token = await tokenService.CreateToken(appUser);
             var refreshToken = await tokenService.CreateRefreshToken(appUser);
 
@@ -85,7 +85,7 @@ namespace UserService.Controllers
         }
 
         [HttpPost("RefreshToken")]
-        public async Task<ActionResult<UserReadDTO>> RefreshToken(RefreshDTO refreshDTO)
+        public async Task<ActionResult<UserReadDTO>> RefreshToken()
         {
             var refreshToken = Request.Cookies[Token.RefreshToken];
 
@@ -100,12 +100,6 @@ namespace UserService.Controllers
             if (appUser == null)
             {
                 return BadRequest("User not found");
-            }
-
-            var userName = appUser.UserName;
-            if (userName != refreshDTO.Username)
-            {
-                return BadRequest("Username does not match");
             }
 
             var token = await tokenService.CreateToken(appUser);

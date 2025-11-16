@@ -28,7 +28,8 @@ namespace UserService.Service
             var claims = new List<Claim>()
             {
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.NameId, user.Id),
+                new Claim("UserId", user.Id),
+                new Claim(JwtRegisteredClaimNames.Name, user.UserName ?? ""),
             };
 
             var roles = await userManager.GetRolesAsync(user);
@@ -72,8 +73,13 @@ namespace UserService.Service
             return refreshToken;
         }
 
-        public async Task<string> GetUserIdFromRefreshToken(string refreshToken)
+        public async Task<string> GetUserIdFromRefreshToken(string? refreshToken)
         {
+            if (refreshToken == null)
+            {
+                return "";
+            }
+
             await using var dbContext = await dbContextFactory.CreateDbContextAsync();
             var foundUserAuthentication =
                 await dbContext.UserTokens
