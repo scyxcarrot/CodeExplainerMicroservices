@@ -224,16 +224,18 @@ namespace UserService.Controllers
             var tokenOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, // Use Secure in production
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/",
                 Expires = DateTime.UtcNow.AddSeconds(Token.AccessTokenExpiryTime)
             };
 
             var refreshTokenOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, // Use Secure in production
-                SameSite = SameSiteMode.Lax,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/",
                 Expires = DateTime.UtcNow.AddSeconds(Token.RefreshTokenExpiryTime)
             };
 
