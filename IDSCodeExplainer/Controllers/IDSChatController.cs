@@ -29,7 +29,7 @@ namespace IDSCodeExplainer.Controllers
 
         [Authorize]
         [HttpPost("Message")]
-        public async Task<ActionResult<ResponseChatMessageDTO>> ChatIDSCode(
+        public async Task<ActionResult<ChatMessageDTO>> ChatIDSCode(
             RequestChatMessageDTO requestChatMessageDTO)
         {
             var chatOptions = new ChatOptions()
@@ -66,13 +66,10 @@ namespace IDSCodeExplainer.Controllers
                 return BadRequest(exception.Message);
             }
 
-            var responseChatMessageDTO = new ResponseChatMessageDTO()
+            var responseChatMessageDTO = new ChatMessageDTO()
             {
-                ChatMessaage = new ChatMessageDTO()
-                {
-                    ChatRole = "Assistant",
-                    TextMessage = chatResponse.Text,
-                }
+                ChatRole = "Assistant",
+                TextMessage = chatResponse.Text,
             };
 
             // send the response to ChatService with rabbitMQ
@@ -92,8 +89,8 @@ namespace IDSCodeExplainer.Controllers
                 var assistantMessageCreateDTO = new MessageCreateDTO()
                 {
                     ChatId = requestChatMessageDTO.ChatId,
-                    ChatRole = responseChatMessageDTO.ChatMessaage.ChatRole,
-                    TextMessage = responseChatMessageDTO.ChatMessaage.TextMessage,
+                    ChatRole = responseChatMessageDTO.ChatRole,
+                    TextMessage = responseChatMessageDTO.TextMessage,
                     MessageOrder = chatMessageCount,
                 };
                 await bus.Publish(assistantMessageCreateDTO);

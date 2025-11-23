@@ -58,6 +58,23 @@ builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
     client.BaseAddress = new Uri(builder.Configuration["ChatServiceUrl"]);
 }).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
 
+var devPolicyName = "DevPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(devPolicyName,
+        policy =>
+        {
+            // Allow requests from your Next.js development URL
+            policy.WithOrigins(
+            "https://localhost:3000",
+            "https://app.code-explainer.com:3000"
+        )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
+
 // model for chat service, switch as needed
 ApiKeyCredential credential;
 if (builder.Environment.IsDevelopment())
@@ -177,7 +194,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
+app.UseCors(devPolicyName);
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

@@ -41,6 +41,23 @@ if (builder.Environment.IsDevelopment())
         reloadOnChange: true);
 }
 
+var devPolicyName = "DevPolicy";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(devPolicyName,
+        policy =>
+        {
+            // Allow requests from your Next.js development URL
+            policy.WithOrigins(
+            "https://localhost:3000",
+            "https://app.code-explainer.com:3000"
+        )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
+
 // Add services to the container.
 builder.Host.UseSerilog((context, configuration) =>
 {
@@ -127,7 +144,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
+app.UseCors(devPolicyName);
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

@@ -225,8 +225,9 @@ namespace UserService.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Path = "/",
+                Domain = ".code-explainer.com",
                 Expires = DateTime.UtcNow.AddSeconds(Token.AccessTokenExpiryTime)
             };
 
@@ -234,8 +235,9 @@ namespace UserService.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Path = "/",
+                Domain = ".code-explainer.com",
                 Expires = DateTime.UtcNow.AddSeconds(Token.RefreshTokenExpiryTime)
             };
 

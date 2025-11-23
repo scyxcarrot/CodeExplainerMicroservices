@@ -58,7 +58,10 @@ builder.Services.AddCors(options =>
         policy =>
         {
             // Allow requests from your Next.js development URL
-            policy.WithOrigins("https://localhost:3000")
+            policy.WithOrigins(
+            "https://localhost:3000",
+            "https://app.code-explainer.com:3000"
+        )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
