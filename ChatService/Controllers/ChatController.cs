@@ -22,7 +22,7 @@ namespace ChatService.Controllers
                 return NotFound();
             }
 
-            return Ok(chat.ToReadDTO());
+            return Ok(chat);
         }
 
         [HttpGet("User/{userExternalId}")]
@@ -32,6 +32,7 @@ namespace ChatService.Controllers
                 .GetAllChatsByUserExternalId(userExternalId);
             return Ok(chats.Select(c => c.ToReadDTO()));
         }
+
 
         [HttpPatch("{chatId}")]
         public async Task<ActionResult<ChatReadDTO>> Update(
@@ -48,7 +49,7 @@ namespace ChatService.Controllers
 
             var newChat = await chatRepository.GetChat(chatId);
 
-            return Ok(newChat.ToReadDTO());
+            return Ok(newChat);
         }
 
         [HttpPost]

@@ -1,6 +1,7 @@
 ﻿using ChatService.DbContexts;
 using ChatService.Models;
 
+using CodeExplainerCommon.DTOs;
 using CodeExplainerCommon.Responses;
 
 using Microsoft.EntityFrameworkCore;
@@ -42,13 +43,28 @@ namespace ChatService.Repositories
             return chatsFound;
         }
 
-        public async Task<Chat?> GetChat(Guid chatId)
+        public async Task<ChatReadDTO?> GetChat(Guid chatId)
         {
             var dbContext = await dbContextFactory.CreateDbContextAsync();
             var chatFound = await dbContext.Chats
                 .AsNoTracking()
-                .Include(chat=>chat.Messages)
-                .FirstOrDefaultAsync(chat => chat.Id == chatId);
+                .Select(chat => new ChatReadDTO // Projecting to the DTO is the fix
+                {
+                    Id = chat.Id,
+                    LastUpdated = chat.LastUpdated,
+                    Title = chat.Title,
+                    Messages = chat.Messages.OrderBy(m => m.MessageOrder)
+                    .Select(message => new MessageReadDTO {
+                        Id = message.Id,
+                        ChatId = message.ChatId,
+                        TimeStamp = message.TimeStamp,
+                        TextMessage = message.TextMessage,
+                        ChatRole = message.ChatRole,
+                        MessageOrder = message.MessageOrder,
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
             return chatFound;
         }
 
