@@ -3,15 +3,57 @@
 namespace IDSCodeExplainer.Services.Ingestion;
 
 public class SemanticSearch(
-    VectorStoreCollection<string, IngestedChunk> vectorCollection)
+    VectorStoreCollection<Guid, CodeDocument> documentCollection,
+    VectorStoreCollection<Guid, CodeChunk> chunkCollection)
 {
-    public async Task<IReadOnlyList<IngestedChunk>> SearchAsync(string text, string? documentIdFilter, int maxResults)
+    /// <summary>
+    /// For an agentic LLM to search the RAG using Model Context Protocol
+    /// </summary>
+    /// <param name="searchText">search text</param>
+    /// <param name="documentNameFilter">document name to filter</param>
+    /// <param name="maxResults"></param>
+    /// <returns>strings of the relevant search text</returns>
+    public async Task<IEnumerable<string>> SearchAsync(string searchText, string? documentNameFilter, int maxResults)
     {
-        var nearest = vectorCollection.SearchAsync(text, maxResults, new VectorSearchOptions<IngestedChunk>
+        VectorSearchOptions<CodeChunk> searchOptions = new VectorSearchOptions<CodeChunk>();
+        if (documentNameFilter != null && documentNameFilter.Length > 0)
         {
-            Filter = documentIdFilter is { Length: > 0 } ? record => record.DocumentId == documentIdFilter : null,
-        });
+            List<CodeDocument> relevantDocuments = await documentCollection
+                .GetAsync(document => document.RelativePath.Contains(documentNameFilter), top: int.MaxValue)
+                .ToListAsync();
 
-        return await nearest.Select(result => result.Record).ToListAsync();
+            List<string> relevantDocumentIds = relevantDocuments
+                .Select(codeDocument => codeDocument.Id.ToString())
+                .ToList();
+            searchOptions.Filter = record => relevantDocumentIds.Contains(record.CodeDocumentId);
+        }
+
+        IAsyncEnumerable<VectorSearchResult<CodeChunk>> searchResults =
+            chunkCollection.SearchAsync(searchText, maxResults, searchOptions);
+        return await searchResults.Select(result => result.Record.CodeSnippet).ToListAsync();
+    }
+
+    /// <summary>
+    /// To find relevant context based on user prompt with similarity scores
+    /// </summary>
+    /// <param name="searchText">prompt from the user</param>
+    /// <param name="maxResults">maximum results</param>
+    /// <returns>All the relevant code chunks with similarity scores</returns>
+    public async Task<Dictionary<CodeChunk, double>> SearchWithSimilarityScoreAsync(string searchText, int maxResults)
+    {
+        IAsyncEnumerable<VectorSearchResult<CodeChunk>> searchResults =
+            chunkCollection.SearchAsync(searchText, maxResults);
+
+        var codeChunkAndScoreMap = new Dictionary<CodeChunk, double>();
+        await foreach (var searchResult in searchResults)
+        {
+            if (searchResult.Score == null)
+            {
+                continue;
+            }
+            codeChunkAndScoreMap[searchResult.Record] = searchResult.Score.Value;
+        }
+
+        return codeChunkAndScoreMap;
     }
 }

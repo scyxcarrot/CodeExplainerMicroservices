@@ -15,15 +15,14 @@
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.8.0-preview.1.25412.6" />
     <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="9.7.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.SqliteVec" Version="1.64.0-preview" />
-    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.64.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.68.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.68.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
-    <PackageReference Include="OllamaSharp" Version="5.4.11" />
-    <PackageReference Include="OpenAI" Version="2.4.0" />
+    <PackageReference Include="OllamaSharp" Version="5.4.12" />
+    <PackageReference Include="OpenAI" Version="2.7.0" />
     <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
   </ItemGroup>
 
   <ItemGroup>

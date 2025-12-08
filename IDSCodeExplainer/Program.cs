@@ -1,5 +1,7 @@
 using System.ClientModel;
+
 using CodeExplainerCommon.Constants;
+
 using IDSCodeExplainer.DelegatingHandlers;
 using IDSCodeExplainer.HttpClients;
 using IDSCodeExplainer.Services;
@@ -10,11 +12,13 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.AI;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.SemanticKernel.Connectors.Qdrant;
 
 using OllamaSharp;
 
 using OpenAI;
-using OpenAI.Chat;
+
+using Qdrant.Client;
 
 using Serilog;
 
@@ -98,25 +102,38 @@ var openAIClientOptions = new OpenAIClientOptions()
 // microsoft/Phi-4-mini-instruct
 // mistral-ai/Ministral-3B
 // mistral-ai/Mistral-Nemo
-var ollamaEndpoint = new Uri("http://localhost:11434");
-IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "gemma3:1b");
 //var chatClient = 
 //    new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
 //        .AsIChatClient();
+
+var ollamaEndpoint = new Uri("http://localhost:11434");
+IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "gemma3:1b");
 builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
 // model for training
 var embeddingGenerator = new OllamaApiClient(
     ollamaEndpoint,
-    "embeddinggemma");
+    "embeddinggemma:latest");
 builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
-var vectorStorePath = Path.Combine(AppContext.BaseDirectory, "VectorStore.db");
-var vectorStoreConnectionString = $"Data Source={vectorStorePath}";
-builder.Services.AddSqliteCollection<string, IngestedChunk>("data-IDSCodeExplainer-chunks", vectorStoreConnectionString);
-builder.Services.AddSqliteCollection<string, IngestedDocument>("data-IDSCodeExplainer-documents", vectorStoreConnectionString);
+// register qdrant
+Uri qdrantUri = new Uri("http://localhost:6334");
+builder.Services.AddSingleton(new QdrantClient(qdrantUri));
 
-builder.Services.AddScoped<DataIngestor>();
+builder.Services.AddQdrantVectorStore(
+    host: qdrantUri.Host,
+    port: qdrantUri.Port,
+    https: false,
+    apiKey: null,
+    options: new QdrantVectorStoreOptions
+    {
+        // Define your options here, including the EmbeddingGenerator
+        EmbeddingGenerator = embeddingGenerator
+    }
+);
+builder.Services.AddQdrantCollection<Guid, CodeChunk>("CodeExplainer-IDS-CodeChunk");
+builder.Services.AddQdrantCollection<Guid, CodeDocument>("CodeExplainer-IDS-CodeDocument");
+
 builder.Services.AddSingleton<SemanticSearch>();
 
 builder.Host.UseSerilog((context, configuration) =>
