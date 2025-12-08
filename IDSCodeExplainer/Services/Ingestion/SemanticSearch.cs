@@ -13,7 +13,7 @@ public class SemanticSearch(
     /// <param name="documentNameFilter">document name to filter</param>
     /// <param name="maxResults"></param>
     /// <returns>strings of the relevant search text</returns>
-    public async Task<IEnumerable<string>> SearchAsync(string searchText, string? documentNameFilter, int maxResults)
+    public async Task<IEnumerable<VectorSearchResult<CodeChunk>>> SearchAsync(string searchText, string? documentNameFilter, int maxResults)
     {
         VectorSearchOptions<CodeChunk> searchOptions = new VectorSearchOptions<CodeChunk>();
         if (documentNameFilter != null && documentNameFilter.Length > 0)
@@ -30,7 +30,7 @@ public class SemanticSearch(
 
         IAsyncEnumerable<VectorSearchResult<CodeChunk>> searchResults =
             chunkCollection.SearchAsync(searchText, maxResults, searchOptions);
-        return await searchResults.Select(result => result.Record.CodeSnippet).ToListAsync();
+        return await searchResults.ToListAsync();
     }
 
     /// <summary>

@@ -1,11 +1,11 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using System.Text;
 
 using CodeExplainerCommon.DTOs;
 
 using IDSCodeExplainer.DTOs;
 using IDSCodeExplainer.HttpClients;
-using IDSCodeExplainer.Services;
+using IDSCodeExplainer.Services.Ingestion;
 
 using MassTransit;
 
@@ -22,9 +22,8 @@ namespace IDSCodeExplainer.Controllers
         ILogger<IDSChatController> logger,
         IConfiguration configuration,
         IChatClient chatClient, 
-        FileService fileService,
+        SemanticSearch semanticSearch,
         IChatServiceClient chatServiceClient,
-        IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
         IBus bus) : ControllerBase
     {
         private string MessageSystemPrompt => configuration["MessageSystemPrompt"]!;
@@ -37,10 +36,9 @@ namespace IDSCodeExplainer.Controllers
         {
             var chatOptions = new ChatOptions()
             {
-                //Tools = [
-                //    AIFunctionFactory.Create(ReadFileTool), 
-                //    AIFunctionFactory.Create(FindFileTool)
-                //]
+                Tools = [
+                    AIFunctionFactory.Create(SearchTool),
+                ]
             };
 
             // get previous messages
@@ -50,54 +48,21 @@ namespace IDSCodeExplainer.Controllers
                 return BadRequest($"ChatId = {requestChatMessageDTO.ChatId} not found");
             }
 
-            // take only the last 4 messages
-            var recentMessageList = chatReadDTO.Messages
-                .OrderBy(m => m.MessageOrder)
-                .TakeLast(4)
-                .Select(messageReadDTO => $"{messageReadDTO.ChatRole}: {messageReadDTO.TextMessage}");
-            var previousMessages = string.Join(Environment.NewLine, recentMessageList).Trim();
-
-            // get context
-            var queryEmbedding = await embeddingGenerator.GenerateVectorAsync(requestChatMessageDTO.Message);
-            var results = movies.SearchEmbeddingAsync(queryEmbedding, 10, new VectorSearchOptions<Movie>()
-            {
-                VectorProperty = movie => movie.DescriptionEmbedding
-            });
-
-            var searchedResult = new HashSet<string>();
-            var references = new HashSet<string>();
-            await foreach (var result in results)
-            {
-                searchedResult.Add($"[{result.Record.Title}]: {result.Record.Description} '{result.Record.Reference}'");
-
-                var score = result.Score ?? 0;
-                var percent = (score * 100).ToString("F2");
-                references.Add($"[{percent}%] {result.Record.Reference}");
-            }
-            var context = string.Join(Environment.NewLine, searchedResult);
-
-            var prompt = $"""
-                          Current context:
-                          {context}
-
-                          Previous conversations:
-                          this is the area of your memory for referred questions.
-                          {previousMessages}
-
-                          Rules:
-                          Make sure you never expose our sensitive information such as tokens to the user as part of the answer.
-                          1. Based on the current context and our previous conversation, please answer the following question.
-                          2. If in the question user asked based on previous conversation, a referred question, use your memory first.
-                          3. If you don't know, say you don't know based on the provided information.
-
-                          User question: {requestChatMessageDTO.Message}
-
-                          Answer:
-                          """;
+            var recentMessages = chatReadDTO.Messages
+                .OrderBy(m => m.MessageOrder);
 
             var systemMessage = new ChatMessage(ChatRole.System, MessageSystemPrompt);
-            var userMessage = new ChatMessage(ChatRole.User, prompt);
-            var chatMessages = new List<ChatMessage> { systemMessage, userMessage };
+            List<ChatMessage> chatMessages = new List<ChatMessage>() { systemMessage };
+            foreach (MessageReadDTO recentMessage in recentMessages)
+            {
+                if (!ConvertStringToChatRole(recentMessage.ChatRole, out ChatRole chatRole))
+                {
+                    return StatusCode(500, "Invalid ChatRole string provided in the message.");
+                }
+
+                ChatMessage chatMessage = new ChatMessage(chatRole, recentMessage.TextMessage);
+                chatMessages.Add(chatMessage);
+            }
 
             ChatResponse? chatResponse;
             try
@@ -139,17 +104,7 @@ namespace IDSCodeExplainer.Controllers
                 logger.LogError("Could not send platform asynchronously {ExMessage}", ex.Message);
             }
 
-            string finalResponse = chatResponse.Text;
-            if (references.Count > 0)
-            {
-                finalResponse += "\n\nReferences used:";
-                foreach (var reference in references)
-                {
-                    finalResponse += $"\n- {reference}";
-                }
-            }
-
-            return Ok(finalResponse);
+            return Ok(chatResponse.Text);
         }
 
         // User is expected to prompt and get the chat title, then create the chat manually
@@ -193,27 +148,24 @@ namespace IDSCodeExplainer.Controllers
         }
 
         /// <summary>
-        /// Reads the content of a specified file.
+        /// Search Qdrant for relevant code chunks
         /// </summary>
-        /// <param name="filepath">The name of the file to read.</param>
-        /// <returns>The entire content of the file.</returns>
-        [Description("Reads the entire content of a file from the file system.")]
-        private async Task<string> ReadFileTool(
-            [Description("The name of the file to read. Provide the full filepath and extension.")] string filepath)
+        /// <param name="searchText">The natural language query or keywords to search for relevant code documentation and source files.</param>
+        /// <returns>A combined string containing the top relevant code snippets and documentation chunks.</returns>
+        [Description("Searches the codebase knowledge base (Qdrant) for relevant code snippets or documentation based on a semantic query.")]
+        private async Task<string> SearchTool(
+            [Description("The natural language query or keywords to search for.")] string searchText)
         {
-            return await fileService.ReadFileContentAsync(filepath); // Call your service method
-        }
+            IEnumerable<VectorSearchResult<CodeChunk>> searchResults = 
+                await semanticSearch.SearchAsync(searchText, null, 10);
 
-        /// <summary>
-        /// Return the list of full file path based on the search term
-        /// </summary>
-        /// <param name="searchTerm">The name of the file to read.</param>
-        /// <returns>IEnumerable of full file path that matches the search term.</returns>
-        [Description("Return the list of full file path based on the search term.")]
-        private async Task<IEnumerable<string>> FindFileTool(
-            [Description("Search term to look for")] string searchTerm)
-        {
-            return fileService.FindFile(searchTerm); // Call your service method
+            StringBuilder stringBuilder = new StringBuilder();
+            foreach (var searchResult in searchResults)
+            {
+                CodeChunk codeChunk = searchResult.Record;
+            }
+
+            return stringBuilder.ToString();
         }
     }
 }
