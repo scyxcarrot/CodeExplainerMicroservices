@@ -48,6 +48,7 @@ namespace ChatService.Repositories
             var dbContext = await dbContextFactory.CreateDbContextAsync();
             var chatFound = await dbContext.Chats
                 .AsNoTracking()
+                .Where(chat => chat.Id == chatId)
                 .Select(chat => new ChatReadDTO // Projecting to the DTO is the fix
                 {
                     Id = chat.Id,

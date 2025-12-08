@@ -27,5 +27,21 @@ namespace IDSCodeExplainer.HttpClients
             logger.LogError("Error: {ResponseStatusCode}", response.StatusCode);
             return null;
         }
+
+        public async Task<ChatReadDTO?> GetChatMessages(Guid chatId)
+        {
+            var response = await httpClient.GetAsync(
+                $"api/v1/ChatService/Chat{chatId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                logger.LogInformation("Success: Chat was created on ChatService");
+                var chatReadDTO = await response.Content.ReadFromJsonAsync<ChatReadDTO>();
+                return chatReadDTO;
+            }
+
+            logger.LogError("Error: {ResponseStatusCode}", response.StatusCode);
+            return null;
+        }
     }
 }

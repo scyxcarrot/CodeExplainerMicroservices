@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 
 using CodeExplainerCommon.DTOs;
 
@@ -11,6 +12,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.VectorData;
 
 namespace IDSCodeExplainer.Controllers
 {
@@ -22,6 +24,7 @@ namespace IDSCodeExplainer.Controllers
         IChatClient chatClient, 
         FileService fileService,
         IChatServiceClient chatServiceClient,
+        IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
         IBus bus) : ControllerBase
     {
         private string MessageSystemPrompt => configuration["MessageSystemPrompt"]!;
@@ -29,30 +32,72 @@ namespace IDSCodeExplainer.Controllers
 
         [Authorize]
         [HttpPost("Message")]
-        public async Task<ActionResult<ChatMessageDTO>> ChatIDSCode(
+        public async Task<ActionResult<string>> ChatIDSCode(
             RequestChatMessageDTO requestChatMessageDTO)
         {
             var chatOptions = new ChatOptions()
             {
-                Tools = [
-                    AIFunctionFactory.Create(ReadFileTool), 
-                    AIFunctionFactory.Create(FindFileTool)
-                ]
+                //Tools = [
+                //    AIFunctionFactory.Create(ReadFileTool), 
+                //    AIFunctionFactory.Create(FindFileTool)
+                //]
             };
 
-            var chatMessages = new List<ChatMessage>();
-            foreach (var chatMessageDTO in requestChatMessageDTO.ChatMessages)
+            // get previous messages
+            var chatReadDTO = await chatServiceClient.GetChatMessages(requestChatMessageDTO.ChatId);
+            if (chatReadDTO == null) 
             {
-                if (!ConvertStringToChatRole(chatMessageDTO.ChatRole, out var chatRole))
-                {
-                    // Instead of throwing an exception, return a BadRequest
-                    return BadRequest($"Invalid ChatRole: {chatMessageDTO.ChatRole}");
-                }
-                chatMessages.Add(new ChatMessage(chatRole, chatMessageDTO.TextMessage));
+                return BadRequest($"ChatId = {requestChatMessageDTO.ChatId} not found");
             }
 
-            // Add the system prompt at the beginning of the message list
-            chatMessages.Insert(0, new ChatMessage(ChatRole.System, MessageSystemPrompt));
+            // take only the last 4 messages
+            var recentMessageList = chatReadDTO.Messages
+                .OrderBy(m => m.MessageOrder)
+                .TakeLast(4)
+                .Select(messageReadDTO => $"{messageReadDTO.ChatRole}: {messageReadDTO.TextMessage}");
+            var previousMessages = string.Join(Environment.NewLine, recentMessageList).Trim();
+
+            // get context
+            var queryEmbedding = await embeddingGenerator.GenerateVectorAsync(requestChatMessageDTO.Message);
+            var results = movies.SearchEmbeddingAsync(queryEmbedding, 10, new VectorSearchOptions<Movie>()
+            {
+                VectorProperty = movie => movie.DescriptionEmbedding
+            });
+
+            var searchedResult = new HashSet<string>();
+            var references = new HashSet<string>();
+            await foreach (var result in results)
+            {
+                searchedResult.Add($"[{result.Record.Title}]: {result.Record.Description} '{result.Record.Reference}'");
+
+                var score = result.Score ?? 0;
+                var percent = (score * 100).ToString("F2");
+                references.Add($"[{percent}%] {result.Record.Reference}");
+            }
+            var context = string.Join(Environment.NewLine, searchedResult);
+
+            var prompt = $"""
+                          Current context:
+                          {context}
+
+                          Previous conversations:
+                          this is the area of your memory for referred questions.
+                          {previousMessages}
+
+                          Rules:
+                          Make sure you never expose our sensitive information such as tokens to the user as part of the answer.
+                          1. Based on the current context and our previous conversation, please answer the following question.
+                          2. If in the question user asked based on previous conversation, a referred question, use your memory first.
+                          3. If you don't know, say you don't know based on the provided information.
+
+                          User question: {requestChatMessageDTO.Message}
+
+                          Answer:
+                          """;
+
+            var systemMessage = new ChatMessage(ChatRole.System, MessageSystemPrompt);
+            var userMessage = new ChatMessage(ChatRole.User, prompt);
+            var chatMessages = new List<ChatMessage> { systemMessage, userMessage };
 
             ChatResponse? chatResponse;
             try
@@ -66,32 +111,26 @@ namespace IDSCodeExplainer.Controllers
                 return BadRequest(exception.Message);
             }
 
-            var responseChatMessageDTO = new ChatMessageDTO()
-            {
-                ChatRole = "Assistant",
-                TextMessage = chatResponse.Text,
-            };
-
             // send the response to ChatService with rabbitMQ
             // RabbitMQ has FIFO as long as we have 1 consumer, so it is ok to send like this
             try
             {
-                var chatMessageCount = requestChatMessageDTO.ChatMessages.Count;
+                var chatMessageCount = chatReadDTO.Messages.Count();
                 var userMessageCreateDTO = new MessageCreateDTO()
                 {
                     ChatId = requestChatMessageDTO.ChatId,
-                    ChatRole = requestChatMessageDTO.ChatMessages[chatMessageCount - 1].ChatRole,
-                    TextMessage = requestChatMessageDTO.ChatMessages[chatMessageCount - 1].TextMessage,
-                    MessageOrder = chatMessageCount - 1,
+                    ChatRole = "üser",
+                    TextMessage = requestChatMessageDTO.Message,
+                    MessageOrder = chatMessageCount,
                 };
                 await bus.Publish(userMessageCreateDTO);
 
                 var assistantMessageCreateDTO = new MessageCreateDTO()
                 {
                     ChatId = requestChatMessageDTO.ChatId,
-                    ChatRole = responseChatMessageDTO.ChatRole,
-                    TextMessage = responseChatMessageDTO.TextMessage,
-                    MessageOrder = chatMessageCount,
+                    ChatRole = "assistant",
+                    TextMessage = chatResponse.Text,
+                    MessageOrder = chatMessageCount + 1,
                 };
                 await bus.Publish(assistantMessageCreateDTO);
             }
@@ -100,7 +139,17 @@ namespace IDSCodeExplainer.Controllers
                 logger.LogError("Could not send platform asynchronously {ExMessage}", ex.Message);
             }
 
-            return Ok(responseChatMessageDTO);
+            string finalResponse = chatResponse.Text;
+            if (references.Count > 0)
+            {
+                finalResponse += "\n\nReferences used:";
+                foreach (var reference in references)
+                {
+                    finalResponse += $"\n- {reference}";
+                }
+            }
+
+            return Ok(finalResponse);
         }
 
         // User is expected to prompt and get the chat title, then create the chat manually

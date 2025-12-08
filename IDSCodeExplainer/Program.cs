@@ -98,15 +98,17 @@ var openAIClientOptions = new OpenAIClientOptions()
 // microsoft/Phi-4-mini-instruct
 // mistral-ai/Ministral-3B
 // mistral-ai/Mistral-Nemo
-var chatClient = 
-    new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
-        .AsIChatClient();
+var ollamaEndpoint = new Uri("http://localhost:11434");
+IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "gemma3:1b");
+//var chatClient = 
+//    new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
+//        .AsIChatClient();
 builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
 // model for training
 var embeddingGenerator = new OllamaApiClient(
-    new Uri("http://localhost:11434"),
-    "nomic-embed-text:latest");
+    ollamaEndpoint,
+    "embeddinggemma");
 builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
 var vectorStorePath = Path.Combine(AppContext.BaseDirectory, "VectorStore.db");
