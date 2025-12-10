@@ -33,27 +33,12 @@ public class SemanticSearch(
         return await searchResults.ToListAsync();
     }
 
-    /// <summary>
-    /// To find relevant context based on user prompt with similarity scores
-    /// </summary>
-    /// <param name="searchText">prompt from the user</param>
-    /// <param name="maxResults">maximum results</param>
-    /// <returns>All the relevant code chunks with similarity scores</returns>
-    public async Task<Dictionary<CodeChunk, double>> SearchWithSimilarityScoreAsync(string searchText, int maxResults)
+    public async Task<CodeDocument> GetDocument(string codeDocumentId)
     {
-        IAsyncEnumerable<VectorSearchResult<CodeChunk>> searchResults =
-            chunkCollection.SearchAsync(searchText, maxResults);
+        CodeDocument codeDocument = await documentCollection
+            .GetAsync(document => document.Id.ToString() == codeDocumentId, 1)
+            .FirstAsync();
 
-        var codeChunkAndScoreMap = new Dictionary<CodeChunk, double>();
-        await foreach (var searchResult in searchResults)
-        {
-            if (searchResult.Score == null)
-            {
-                continue;
-            }
-            codeChunkAndScoreMap[searchResult.Record] = searchResult.Score.Value;
-        }
-
-        return codeChunkAndScoreMap;
+        return codeDocument;
     }
 }

@@ -31,7 +31,7 @@ namespace IDSCodeExplainer.HttpClients
         public async Task<ChatReadDTO?> GetChatMessages(Guid chatId)
         {
             var response = await httpClient.GetAsync(
-                $"api/v1/ChatService/Chat{chatId}");
+                $"api/v1/ChatService/Chat/{chatId}");
 
             if (response.IsSuccessStatusCode)
             {

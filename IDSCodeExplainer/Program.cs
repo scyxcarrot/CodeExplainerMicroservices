@@ -107,7 +107,7 @@ var openAIClientOptions = new OpenAIClientOptions()
 //        .AsIChatClient();
 
 var ollamaEndpoint = new Uri("http://localhost:11434");
-IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "gemma3:1b");
+IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "granite4:1b");
 builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
 // model for training

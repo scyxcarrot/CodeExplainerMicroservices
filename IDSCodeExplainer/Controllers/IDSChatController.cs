@@ -160,10 +160,38 @@ namespace IDSCodeExplainer.Controllers
                 await semanticSearch.SearchAsync(searchText, null, 10);
 
             StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.AppendLine("--- START OF RETRIEVED CONTEXT ---");
+
+            int index = 1;
             foreach (var searchResult in searchResults)
             {
                 CodeChunk codeChunk = searchResult.Record;
+                double? score = searchResult.Score;
+                string typeName = codeChunk.TypeName;
+                string codeDocumentId = codeChunk.CodeDocumentId;
+
+                CodeDocument codeDocument = await semanticSearch.GetDocument(codeDocumentId);
+
+                // Add a section for each chunk with metadata
+                stringBuilder.AppendLine($"\n### RESULT {index} (Score: {score:F4})");
+                stringBuilder.AppendLine($"Filename: {codeDocument.RelativePath}");
+                stringBuilder.AppendLine($"Class: {typeName}");
+                stringBuilder.AppendLine("CODE SNIPPET:");
+                stringBuilder.AppendLine("```csharp");
+                stringBuilder.AppendLine(codeChunk.CodeSnippet);
+                stringBuilder.AppendLine("```");
+
+                index++;
             }
+
+            // 4. Handle Case: No Results Found
+            if (!searchResults.Any())
+            {
+                stringBuilder.AppendLine("No relevant code chunks or documentation were found in the knowledge base.");
+            }
+
+            // Add a clear ending delimiter
+            stringBuilder.AppendLine("\n--- END OF RETRIEVED CODEBASE CONTEXT ---");
 
             return stringBuilder.ToString();
         }
