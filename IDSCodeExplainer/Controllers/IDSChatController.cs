@@ -84,8 +84,8 @@ namespace IDSCodeExplainer.Controllers
                 var userMessageCreateDTO = new MessageCreateDTO()
                 {
                     ChatId = requestChatMessageDTO.ChatId,
-                    ChatRole = "üser",
-                    TextMessage = requestChatMessageDTO.Message,
+                    ChatRole = "user",
+                    TextMessage = requestChatMessageDTO.ChatMessage,
                     MessageOrder = chatMessageCount,
                 };
                 await bus.Publish(userMessageCreateDTO);
