@@ -35,9 +35,14 @@ public class SemanticSearch(
 
     public async Task<CodeDocument> GetDocument(string codeDocumentId)
     {
-        CodeDocument codeDocument = await documentCollection
-            .GetAsync(document => document.Id.ToString() == codeDocumentId, 1)
-            .FirstAsync();
+        // 1. Convert the input string ID into the required Guid type (TKey)
+        if (!Guid.TryParse(codeDocumentId, out Guid parsedId))
+        {
+            // Handle case where the input string is not a valid Guid format
+            return null;
+        }
+
+        CodeDocument codeDocument = await documentCollection.GetAsync(parsedId);
 
         return codeDocument;
     }
