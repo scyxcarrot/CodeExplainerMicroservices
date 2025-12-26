@@ -1,5 +1,6 @@
 ﻿using ChatService.DTOs;
 using ChatService.Mappings;
+using ChatService.Models;
 using ChatService.Repositories;
 using CodeExplainerCommon.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +17,7 @@ namespace ChatService.Controllers
         [HttpGet("{externalUserId}", Name = "GetUserByExternalId")]
         public async Task<ActionResult<UserReadDTO>> GetUserByExternalId(string externalUserId)
         {
-            var appUser = await userRepository.GetUserByExternalId(externalUserId);
+            var appUser = await userRepository.GetOrCreateUserByExternalId(externalUserId);
             if (appUser == null)
             {
                 return NotFound();

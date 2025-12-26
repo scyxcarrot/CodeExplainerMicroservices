@@ -1,5 +1,7 @@
 using ChatService.Consumers;
 using ChatService.DbContexts;
+using ChatService.DelegatingHandlers;
+using ChatService.HttpClients;
 using ChatService.Repositories;
 using CodeExplainerCommon.Constants;
 using MassTransit;
@@ -40,6 +42,14 @@ if (builder.Environment.IsDevelopment())
         optional: false,
         reloadOnChange: true);
 }
+
+// Add http clients
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<AuthorizationDelegatingHandler>();
+builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["UserServiceUrl"]);
+}).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
 
 var devPolicyName = "DevPolicy";
 builder.Services.AddCors(options =>

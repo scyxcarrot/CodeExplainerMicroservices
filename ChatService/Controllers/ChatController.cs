@@ -1,4 +1,5 @@
-﻿using ChatService.Mappings;
+﻿using ChatService.HttpClients;
+using ChatService.Mappings;
 using ChatService.Models;
 using ChatService.Repositories;
 using CodeExplainerCommon.DTOs;
@@ -11,7 +12,9 @@ namespace ChatService.Controllers
     [ApiController]
     [Route("api/v1/ChatService/[controller]")]
     public class ChatController(
-        IChatRepository chatRepository) : ControllerBase
+        IChatRepository chatRepository,
+        IUserRepository userRepository,
+        IUserServiceClient userServiceClient) : ControllerBase
     {
         [HttpGet("{chatId}", Name = "GetChatById")]
         public async Task<ActionResult<ChatReadDTO>> GetChatById(Guid chatId)
@@ -28,9 +31,8 @@ namespace ChatService.Controllers
         [HttpGet("User/{userExternalId}")]
         public async Task<ActionResult<IEnumerable<ChatReadDTO>>> GetAllChats(string userExternalId)
         {
-            var chats = await chatRepository
-                .GetAllChatsByUserExternalId(userExternalId);
-            return Ok(chats.Select(c => c.ToReadDTO()));
+            AppUser appUser = await userRepository.GetOrCreateUserByExternalId(userExternalId);
+            return Ok(appUser.Chats.Select(c => c.ToReadDTO()));
         }
 
 

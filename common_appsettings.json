@@ -28,5 +28,6 @@
     "RabbitMQUsername": "guest",
     "RabbitMQPassword": "guest",
 
-    "ChatServiceUrl": "http://chat-clusterip-service:7272"
+    "ChatServiceUrl": "http://chat-clusterip-service:7272",
+    "UserServiceUrl": "http://user-clusterip-service:7093"
 }
