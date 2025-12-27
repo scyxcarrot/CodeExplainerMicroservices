@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
 using ChatService.Models;
+using MassTransit;
 
 namespace ChatService.DbContexts
 {
@@ -11,9 +12,11 @@ namespace ChatService.DbContexts
         public DbSet<Chat> Chats { get; set; }
         public DbSet<Message> Messages { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.AddTransactionalOutboxEntities();
         }
     }
 }

@@ -124,8 +124,16 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddMassTransit(
     busRegistrationConfigurator =>
     {
+        busRegistrationConfigurator.AddEntityFrameworkOutbox<ChatDbContext>(outboxConfigurator =>
+        {
+            outboxConfigurator.UseSqlServer();
+            outboxConfigurator.DuplicateDetectionWindow = TimeSpan.FromSeconds(30);
+        });
+
         busRegistrationConfigurator.SetKebabCaseEndpointNameFormatter();
         busRegistrationConfigurator.AddConsumer<ChatCreateConsumer>();
+        busRegistrationConfigurator.AddConsumer<UserCreateConsumer>();
+        busRegistrationConfigurator.AddConsumer<UserDeleteConsumer>();
 
         busRegistrationConfigurator.UsingRabbitMq((context, cfg) =>
         {

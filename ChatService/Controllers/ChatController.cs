@@ -1,5 +1,4 @@
-﻿using ChatService.HttpClients;
-using ChatService.Mappings;
+﻿using ChatService.Mappings;
 using ChatService.Models;
 using ChatService.Repositories;
 using CodeExplainerCommon.DTOs;
@@ -13,8 +12,7 @@ namespace ChatService.Controllers
     [Route("api/v1/ChatService/[controller]")]
     public class ChatController(
         IChatRepository chatRepository,
-        IUserRepository userRepository,
-        IUserServiceClient userServiceClient) : ControllerBase
+        IUserRepository userRepository) : ControllerBase
     {
         [HttpGet("{chatId}", Name = "GetChatById")]
         public async Task<ActionResult<ChatReadDTO>> GetChatById(Guid chatId)

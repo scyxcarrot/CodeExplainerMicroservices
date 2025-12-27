@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using MassTransit;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,9 +13,9 @@ namespace UserService.DbContexts
     {
         public DbSet<UserToken> UserTokens { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
             var identityRoles = new List<IdentityRole>()
             {
                 new IdentityRole
@@ -31,7 +32,9 @@ namespace UserService.DbContexts
                 },
             };
 
-            builder.Entity<IdentityRole>().HasData(identityRoles);
+            modelBuilder.Entity<IdentityRole>().HasData(identityRoles);
+
+            modelBuilder.AddTransactionalOutboxEntities();
         }
     }
 }

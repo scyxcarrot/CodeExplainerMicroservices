@@ -1,17 +1,21 @@
-﻿using System.Data;
-using System.Reflection;
+﻿using System.Reflection;
+using CodeExplainerCommon.Contracts;
 using CodeExplainerCommon.Responses;
-using Microsoft.AspNetCore.Identity;
 
+using MassTransit;
+
+using Microsoft.AspNetCore.Identity;
 using UserService.Constants;
-using UserService.DTOs;
+using UserService.DbContexts;
 using UserService.Models;
 
 namespace UserService.Repositories
 {
     public class UserRepository(
         UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager) : IUserRepository
+        SignInManager<AppUser> signInManager,
+        IPublishEndpoint publishEndpoint,
+        UserDbContext userDbContext) : IUserRepository
     {
         public async Task<ResponseResult> Login(string email, string password)
         {
@@ -64,32 +68,53 @@ namespace UserService.Repositories
             string password,
             IEnumerable<string> roles)
         {
-            var appUserFound = await userManager.FindByEmailAsync(appUser.Email);
-            if (appUserFound != null)
-            {
-                return new ResponseResult(
-                    false, $"Email {appUser.Email} already registered");
-            }
-
-            var identityResult = await userManager.CreateAsync(appUser, password);
-            if (!identityResult.Succeeded)
-            {
-                return new ResponseResult(identityResult.Succeeded,
-                    identityResult.Errors.Select(x => x.Description));
-            }
-
+            // validate roles
+            IEnumerable<string> validRoles = GetAllRoles();
             foreach (var role in roles)
             {
-                var roleValid = GetAllRoles().Any(r => r == role);
+                var roleValid = validRoles.Any(r => r == role);
                 if (!roleValid)
                 {
                     return new ResponseResult(false, $"Role {role} is not valid");
                 }
             }
 
-            var roleResult = await userManager.AddToRolesAsync(appUser, roles);
-            return new ResponseResult(roleResult.Succeeded,
-                roleResult.Errors.Select(x => x.Description));
+            await using var transaction = await userDbContext.Database.BeginTransactionAsync();
+            try
+            {
+                var appUserFound = await userManager.FindByEmailAsync(appUser.Email);
+                if (appUserFound != null)
+                {
+                    return new ResponseResult(
+                        false, $"Email {appUser.Email} already registered");
+                }
+
+                var identityResult = await userManager.CreateAsync(appUser, password);
+                if (!identityResult.Succeeded)
+                {
+                    return new ResponseResult(identityResult.Succeeded,
+                        identityResult.Errors.Select(x => x.Description));
+                }
+
+                // add roles
+                var roleResult = await userManager.AddToRolesAsync(appUser, roles);
+
+                // publish event into outbox
+                var userCreatedDTO = new UserCreated() { Id = appUser.Id };
+                await publishEndpoint.Publish(userCreatedDTO);
+
+                // commit the whole changes in 1 transaction
+                await userDbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new ResponseResult(roleResult.Succeeded,
+                    roleResult.Errors.Select(x => x.Description));
+            }
+            catch (Exception exception)
+            {
+                await transaction.RollbackAsync();
+                return new ResponseResult(false, exception.Message);
+            }
         }
 
         public IEnumerable<string> GetAllRoles()
@@ -174,14 +199,29 @@ namespace UserService.Repositories
                 return new ResponseResult(false, $"User {userId} not found.");
             }
 
-            var result = await userManager.DeleteAsync(user);
-            if (!result.Succeeded)
+            await using var transaction = await userDbContext.Database.BeginTransactionAsync();
+            try
             {
-                return new ResponseResult(false,
-                    result.Errors.Select(x => x.Description));
-            }
 
-            return new ResponseResult(true, $"User {userId} deleted.");
+                var result = await userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    return new ResponseResult(false,
+                        result.Errors.Select(x => x.Description));
+                }
+
+                await publishEndpoint.Publish(new UserDeleted { Id = userId });
+
+                // commit the whole changes in 1 transaction
+                await userDbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return new ResponseResult(true, $"User {userId} deleted.");
+            }
+            catch (Exception exception)
+            {
+                await transaction.RollbackAsync();
+                return new ResponseResult(false, exception.Message);
+            }
         }
     }
 }

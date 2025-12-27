@@ -1,11 +1,9 @@
 ﻿using CodeExplainerCommon.Constants;
-using CodeExplainerCommon.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using UserService.Constants;
 using UserService.DTOs;
-using UserService.HttpClients;
 using UserService.Mappings;
 using UserService.Repositories;
 using UserService.Service;
@@ -16,8 +14,7 @@ namespace UserService.Controllers
     [Route("api/v1/UserService/[controller]")]
     public class UserController(
         ITokenService tokenService,
-        IUserRepository userRepository,
-        IChatServiceClient chatServiceClient) : ControllerBase
+        IUserRepository userRepository) : ControllerBase
     {
         [Authorize]
         [HttpGet("{userId}", Name = "GetUserById")]
@@ -54,10 +51,6 @@ namespace UserService.Controllers
                 Roles = registerDTO.Roles,
             };
 
-            // Send the created user to ChatService by HTTP
-            // this ensures the user is created on that side instantly, it cannot wait
-            var userCreated = new UserCreatedDTO { Id = appUser.Id };
-            await chatServiceClient.NotifyUserCreated(userCreated);
             return CreatedAtRoute(nameof(GetUserById),
                 new { userId = appUser.Id }, userReadDTO);
         }
@@ -192,21 +185,7 @@ namespace UserService.Controllers
             {
                 return BadRequest(result.Message);
             }
-
-            // Send the deleted user to ChatService by HTTP
-            // this ensures the user is deleted on that side instantly, it cannot wait
-            var deleteUserInChatServiceSuccess = await chatServiceClient.NotifyUserDeleted(userId);
-            if (deleteUserInChatServiceSuccess)
-            {
-                return NoContent();
-            }
-
-            var failureMessage = "User deleted, but related data could not be removed: ";
-            if (!deleteUserInChatServiceSuccess)
-            {
-                failureMessage += "Failed to notify ChatService of user deletion;";
-            }
-            return BadRequest(failureMessage);
+            return NoContent();
         }
 
         [Authorize]

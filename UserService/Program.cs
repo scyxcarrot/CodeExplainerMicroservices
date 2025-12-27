@@ -1,14 +1,15 @@
-using System;
 using CodeExplainerCommon.Constants;
+
+using MassTransit;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 using Serilog;
+
 using UserService.DbContexts;
-using UserService.DelegatingHandlers;
-using UserService.HttpClients;
 using UserService.Models;
 using UserService.Repositories;
 using UserService.Service;
@@ -44,13 +45,6 @@ if (builder.Environment.IsDevelopment())
         reloadOnChange: true);
 }
 
-// Add http clients
-builder.Services.AddTransient<AuthorizationDelegatingHandler>();
-builder.Services.AddHttpClient<IChatServiceClient, ChatServiceClient>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ChatServiceUrl"]);
-}).AddHttpMessageHandler<AuthorizationDelegatingHandler>();
-
 var devPolicyName = "DevPolicy";
 builder.Services.AddCors(options =>
 {
@@ -76,9 +70,16 @@ builder.Host.UseSerilog((context, configuration) =>
 
 builder.Services.AddControllers();
 var connectionString = builder.Configuration.GetConnectionString("Default");
+
+// For token service
 builder.Services.AddDbContextFactory<UserDbContext>(
     options => options.UseSqlServer(connectionString),
     ServiceLifetime.Scoped);
+
+// For Identity, MassTransit, and Scoped Services
+builder.Services.AddDbContext<UserDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
@@ -126,6 +127,34 @@ builder.Services.AddAuthentication(options =>
             }
         };
 
+    });
+
+
+builder.Services.AddMassTransit(
+    busRegistrationConfigurator =>
+    {
+        busRegistrationConfigurator.AddEntityFrameworkOutbox<UserDbContext>(outboxConfigurator =>
+        {
+            outboxConfigurator.QueryDelay = TimeSpan.FromSeconds(5);
+            outboxConfigurator.UseSqlServer().UseBusOutbox();
+        });
+
+        busRegistrationConfigurator.SetKebabCaseEndpointNameFormatter();
+        busRegistrationConfigurator.UsingRabbitMq((context, cfg) =>
+        {
+            var rabbitMQHost = builder.Configuration["RabbitMQHost"];
+            var rabbitMQPort = ushort.Parse(builder.Configuration["RabbitMQPort"]);
+            cfg.Host(
+                rabbitMQHost,
+                rabbitMQPort,
+                "/",
+                h =>
+                {
+                    h.Username(builder.Configuration["RabbitMQUsername"]);
+                    h.Password(builder.Configuration["RabbitMQPassword"]);
+                });
+            cfg.ConfigureEndpoints(context);
+        });
     });
 
 var app = builder.Build();
