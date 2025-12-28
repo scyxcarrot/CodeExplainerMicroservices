@@ -206,7 +206,7 @@ namespace UserService.Controllers
                 Secure = true,
                 SameSite = SameSiteMode.Lax,
                 Path = "/",
-                Domain = ".code-explainer.com",
+                //Domain = ".code-explainer.com",
                 Expires = DateTime.UtcNow.AddSeconds(Token.AccessTokenExpiryTime)
             };
 
@@ -216,7 +216,7 @@ namespace UserService.Controllers
                 Secure = true,
                 SameSite = SameSiteMode.Lax,
                 Path = "/",
-                Domain = ".code-explainer.com",
+                //Domain = ".code-explainer.com",
                 Expires = DateTime.UtcNow.AddSeconds(Token.RefreshTokenExpiryTime)
             };
 

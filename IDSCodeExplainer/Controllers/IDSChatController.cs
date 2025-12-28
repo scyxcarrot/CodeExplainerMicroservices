@@ -38,7 +38,10 @@ namespace IDSCodeExplainer.Controllers
             {
                 Tools = [
                     AIFunctionFactory.Create(SearchTool),
-                ]
+                ],
+                AllowMultipleToolCalls = true,
+                ToolMode = ChatToolMode.Auto,
+                
             };
 
             // get previous messages
@@ -63,6 +66,7 @@ namespace IDSCodeExplainer.Controllers
                 ChatMessage chatMessage = new ChatMessage(chatRole, recentMessage.TextMessage);
                 chatMessages.Add(chatMessage);
             }
+            chatMessages.Add(new ChatMessage(ChatRole.User, requestChatMessageDTO.ChatMessage));
 
             ChatResponse? chatResponse;
             try
@@ -156,6 +160,9 @@ namespace IDSCodeExplainer.Controllers
         private async Task<string> SearchTool(
             [Description("The natural language query or keywords to search for.")] string searchText)
         {
+            logger.LogInformation("AI is calling this tool with search text = {SearchText}", 
+                searchText);
+
             IEnumerable<VectorSearchResult<CodeChunk>> searchResults = 
                 await semanticSearch.SearchAsync(searchText, null, 10);
 

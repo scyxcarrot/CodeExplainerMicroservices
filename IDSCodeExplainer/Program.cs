@@ -4,7 +4,6 @@ using CodeExplainerCommon.Constants;
 
 using IDSCodeExplainer.DelegatingHandlers;
 using IDSCodeExplainer.HttpClients;
-using IDSCodeExplainer.Services;
 using IDSCodeExplainer.Services.Ingestion;
 
 using MassTransit;
@@ -17,6 +16,7 @@ using Microsoft.SemanticKernel.Connectors.Qdrant;
 using OllamaSharp;
 
 using OpenAI;
+using OpenAI.Chat;
 
 using Qdrant.Client;
 
@@ -97,17 +97,19 @@ var openAIClientOptions = new OpenAIClientOptions()
     Endpoint = new Uri("https://models.github.ai/inference")
 };
 
+// microsoft/MAI-DS-R1 is for debugging purposes only. Expensive!
+
 // models that support tools
 // ai21-labs/AI21-Jamba-1.5-Mini
 // microsoft/Phi-4-mini-instruct
 // mistral-ai/Ministral-3B
 // mistral-ai/Mistral-Nemo
-//var chatClient = 
-//    new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
-//        .AsIChatClient();
+var chatClient =
+    new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
+        .AsIChatClient();
 
 var ollamaEndpoint = new Uri("http://localhost:11434");
-IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "granite4:1b");
+//IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "granite4:1b");
 builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
 // model for training
