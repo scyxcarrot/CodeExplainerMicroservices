@@ -119,22 +119,37 @@ var embeddingGenerator = new OllamaApiClient(
 builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
 // register qdrant
-Uri qdrantUri = new Uri("http://localhost:6334");
-builder.Services.AddSingleton(new QdrantClient(qdrantUri));
+string qdrantHost = "qdrant";
+if (builder.Environment.IsDevelopment())
+{
+    qdrantHost = "localhost";
+}
+const int qdrantGrpcPort = 6334;
 
+// Register Qdrant gRPC client
+builder.Services.AddSingleton(_ =>
+    new QdrantClient(
+        host: qdrantHost,
+        port: qdrantGrpcPort
+    )
+);
+
+// Register Vector Store
 builder.Services.AddQdrantVectorStore(
-    host: qdrantUri.Host,
-    port: qdrantUri.Port,
+    host: qdrantHost,
+    port: qdrantGrpcPort,
     https: false,
     apiKey: null,
     options: new QdrantVectorStoreOptions
     {
-        // Define your options here, including the EmbeddingGenerator
         EmbeddingGenerator = embeddingGenerator
     }
 );
-builder.Services.AddQdrantCollection<Guid, CodeChunk>("CodeExplainer-IDS-CodeChunk");
-builder.Services.AddQdrantCollection<Guid, CodeDocument>("CodeExplainer-IDS-CodeDocument");
+
+string codeChunkCollectionName = "CodeExplainer-IDS-CodeChunk";
+string codeDocumentCollectionName = "CodeExplainer-IDS-CodeDocument";
+builder.Services.AddQdrantCollection<Guid, CodeChunk>(codeChunkCollectionName);
+builder.Services.AddQdrantCollection<Guid, CodeDocument>(codeDocumentCollectionName);
 
 builder.Services.AddSingleton<SemanticSearch>();
 
@@ -230,4 +245,13 @@ app.MapControllers();
 //    new CodeFileDirectorySource(Path.Combine(contentRootPath, "Data")));
 Console.WriteLine("IDSCodeExplainer successfully configured");
 Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
+
+var qdrantClient = app.Services.GetRequiredService<QdrantClient>();
+var codeChunkCollectionInfo = await qdrantClient.GetCollectionInfoAsync(codeChunkCollectionName);
+var codeChunkStatus = codeChunkCollectionInfo.Status;
+Console.WriteLine($"CodeChunk Collection launched with status = {codeChunkStatus}");
+
+var codeDocumentCollectionInfo = await qdrantClient.GetCollectionInfoAsync(codeDocumentCollectionName);
+var codeDocumentStatus = codeDocumentCollectionInfo.Status;
+Console.WriteLine($"CodeDocument Collection launched with status = {codeDocumentStatus}");
 app.Run();
