@@ -108,7 +108,7 @@ var chatClient =
     new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
         .AsIChatClient();
 
-var ollamaEndpoint = new Uri("http://localhost:11434");
+var ollamaEndpoint = new Uri(builder.Configuration["Ollama:Endpoint"]!);
 //IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "granite4:1b");
 builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
@@ -119,11 +119,7 @@ var embeddingGenerator = new OllamaApiClient(
 builder.Services.AddEmbeddingGenerator(embeddingGenerator);
 
 // register qdrant
-string qdrantHost = "qdrant";
-if (builder.Environment.IsDevelopment())
-{
-    qdrantHost = "localhost";
-}
+string qdrantHost = builder.Configuration["QdrantHost"]!;
 const int qdrantGrpcPort = 6334;
 
 // Register Qdrant gRPC client

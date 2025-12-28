@@ -1,0 +1,46 @@
+ollama:
+    replicaCount: 1
+
+    # Model persistence
+    persistentVolume:
+        enabled: true
+        size: 1Gi
+
+    # CPU resources
+    resources:
+        requests:
+            cpu: "2"
+            memory: "4Gi"
+        limits:
+            cpu: "4"
+            memory: "8Gi"
+
+    # Pre-pull your embedding model
+    models:
+        pull:
+            - embeddinggemma:latest
+
+    # Service exposure
+    service:
+        type: ClusterIP
+        port: 11434
+
+    # No GPU required
+    gpu:
+        enabled: false
+
+    # Optional: readiness probe
+    readinessProbe:
+        httpGet:
+            path: /
+            port: 11434
+        initialDelaySeconds: 10
+        periodSeconds: 10
+
+    # Optional: liveness probe
+    livenessProbe:
+        httpGet:
+            path: /
+            port: 11434
+        initialDelaySeconds: 30
+        periodSeconds: 30
