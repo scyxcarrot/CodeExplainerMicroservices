@@ -108,7 +108,7 @@ var chatClient =
     new ChatClient("mistral-ai/Ministral-3B", credential, openAIClientOptions)
         .AsIChatClient();
 
-var ollamaEndpoint = new Uri(builder.Configuration["Ollama:Endpoint"]!);
+var ollamaEndpoint = new Uri(builder.Configuration["OllamaEndpoint"]!);
 //IChatClient chatClient = new OllamaApiClient(ollamaEndpoint, "granite4:1b");
 builder.Services.AddChatClient(chatClient).UseFunctionInvocation().UseLogging();
 
