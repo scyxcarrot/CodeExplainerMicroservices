@@ -242,6 +242,9 @@ app.MapControllers();
 Console.WriteLine("IDSCodeExplainer successfully configured");
 Console.WriteLine($"ChatService Url = {builder.Configuration["ChatServiceUrl"]}");
 
+Console.WriteLine($"QDrant host = {qdrantHost}");
+Console.WriteLine($"QDrant port = {qdrantGrpcPort}");
+
 var qdrantClient = app.Services.GetRequiredService<QdrantClient>();
 var codeChunkCollectionInfo = await qdrantClient.GetCollectionInfoAsync(codeChunkCollectionName);
 var codeChunkStatus = codeChunkCollectionInfo.Status;
