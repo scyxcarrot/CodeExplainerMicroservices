@@ -9,7 +9,7 @@ helm upgrade --install ollama otwld/ollama --namespace ollama --create-namespace
 
 REM --- Kubernetes secrets ---
 kubectl create secret generic mssql --from-literal=SA_PASSWORD="pa55w0rd!"
-kubectl create secret generic github-model-token --from-literal=GitHubModelToken="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"
+kubectl create secret generic github-model-token --from-literal=GitHubModelToken="github_pat_1XXX"
 
 REM --- Apply manifests ---
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.13.3/deploy/static/provider/cloud/deploy.yaml
