@@ -27,8 +27,8 @@ namespace ChatService.Repositories
             var appUserFound = await dbContext.AppUsers
                 .AsNoTracking()
                 .Include(user => user.Chats)
+                .ThenInclude(chat=>chat.Messages)
                 .FirstOrDefaultAsync(user => user.ExternalId == externalUserId);
-
 
             if (appUserFound != null)
             {

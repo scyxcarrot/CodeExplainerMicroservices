@@ -1,5 +1,8 @@
 ﻿using ChatService.Models;
+
 using CodeExplainerCommon.DTOs;
+
+using static MassTransit.Monitoring.Performance.BuiltInCounters;
 
 namespace ChatService.Mappings
 {
@@ -26,10 +29,17 @@ namespace ChatService.Mappings
 
         public static ChatReadDTO ToReadDTO(this Chat chat)
         {
-            return new ChatReadDTO()
+            ChatReadDTO chatReadDTO = new ChatReadDTO()
             {
                 Id = chat.Id,
-                Messages = chat.Messages.Select(message => new MessageReadDTO
+                Title = chat.Title,
+                LastUpdated = chat.LastUpdated,
+            };
+
+            IEnumerable<MessageReadDTO> messageReadDTOs = new List<MessageReadDTO>();
+            if (chat.Messages.Any())
+            {
+                messageReadDTOs = chat.Messages.Select(message => new MessageReadDTO
                 {
                     Id = message.Id,
                     ChatId = message.ChatId,
@@ -37,9 +47,15 @@ namespace ChatService.Mappings
                     TextMessage = message.TextMessage,
                     ChatRole = message.ChatRole,
                     MessageOrder = message.MessageOrder,
-                }),
+                });
+            }
+
+            return new ChatReadDTO()
+            {
+                Id = chat.Id,
                 Title = chat.Title,
                 LastUpdated = chat.LastUpdated,
+                Messages = messageReadDTOs,
             };
         }
     }
