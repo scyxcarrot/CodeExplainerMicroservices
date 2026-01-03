@@ -203,7 +203,7 @@ namespace ChatService.Test.Controllers
 
             // Assert
             CreatedAtRouteResult createdAtRouteResult = result.Result.Should().BeOfType<CreatedAtRouteResult>().Subject;
-            createdAtRouteResult.RouteName.Should().Be("GetChatById");
+            createdAtRouteResult.RouteName.Should().Be(nameof(_chatController.GetChatById));
             ChatReadDTO resultChatReadDTO = createdAtRouteResult.Value.Should().BeOfType<ChatReadDTO>().Subject;
             
             resultChatReadDTO.Title.Should().Be(title);
