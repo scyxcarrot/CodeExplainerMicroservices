@@ -71,7 +71,8 @@ builder.Services.AddCors(options =>
             // Allow requests from your Next.js development URL
             policy.WithOrigins(
             "https://localhost:3000",
-            "https://app.code-explainer.com:3000"
+            "https://app.code-explainer.com:3000",
+            "https://app.code-explainer.com"
         )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
@@ -224,7 +225,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseSerilogRequestLogging();
+app.UseRouting();
 app.UseCors(devPolicyName);
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
