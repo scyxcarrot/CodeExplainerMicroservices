@@ -8,7 +8,6 @@ namespace ChatService.Repositories
     public interface IChatRepository
     {
         public Task<ResponseResult> CreateChat(Chat chat, string externalUserId);
-        public Task<IEnumerable<Chat>> GetAllChatsByUserExternalId(string userExternalId);
         public Task<ChatReadDTO?> GetChat(Guid chatId);
         public Task<ResponseResult> UpdateChat(Chat chat);
         public Task<ResponseResult> DeleteChat(Guid chatId);

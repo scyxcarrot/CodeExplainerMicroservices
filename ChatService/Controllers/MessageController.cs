@@ -63,7 +63,7 @@ namespace ChatService.Controllers
             var result = await messageRepository.DeleteMessage(messageId);
             if (!result.Success)
             {
-                return BadRequest(result.Message);
+                return NotFound(result.Message);
             }
 
             return NoContent();

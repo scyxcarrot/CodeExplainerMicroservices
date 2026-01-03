@@ -26,23 +26,6 @@ namespace ChatService.Repositories
                 $"Chat {chat.Title} created");
         }
 
-        public async Task<IEnumerable<Chat>> GetAllChatsByUserExternalId(string userExternalId)
-        {
-            var dbContext = await dbContextFactory.CreateDbContextAsync();
-            var userId = await dbContext.AppUsers
-                .AsNoTracking()
-                .Where(u => u.ExternalId == userExternalId)
-                .Select(u => u.Id)
-                .FirstOrDefaultAsync();
-
-            var chatsFound = dbContext.Chats
-                .AsNoTracking()
-                .Where(chat => chat.UserId == userId)
-                .Include(chat => chat.Messages)
-                .OrderByDescending(c=>c.LastUpdated);
-            return chatsFound;
-        }
-
         public async Task<ChatReadDTO?> GetChat(Guid chatId)
         {
             var dbContext = await dbContextFactory.CreateDbContextAsync();

@@ -13,7 +13,8 @@ namespace ChatService.Models
 
         [Required]
         public string Title { get; set; }
-        public List<Message> Messages { get; set; }
+
+        public List<Message> Messages { get; set; } = new List<Message>();
 
         [Required]
         public DateTime LastUpdated { get; set; }

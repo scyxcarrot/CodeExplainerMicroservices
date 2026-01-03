@@ -5,8 +5,6 @@ namespace ChatService.Repositories
 {
     public interface IUserRepository
     {
-        public Task<ResponseResult> CreateUser(AppUser appUser);
         public Task<AppUser> GetOrCreateUserByExternalId(string externalUserId);
-        public Task<ResponseResult> DeleteUserByExternalId(string externalUserId);
     }
 }

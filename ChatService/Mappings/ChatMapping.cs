@@ -29,13 +29,6 @@ namespace ChatService.Mappings
 
         public static ChatReadDTO ToReadDTO(this Chat chat)
         {
-            ChatReadDTO chatReadDTO = new ChatReadDTO()
-            {
-                Id = chat.Id,
-                Title = chat.Title,
-                LastUpdated = chat.LastUpdated,
-            };
-
             IEnumerable<MessageReadDTO> messageReadDTOs = new List<MessageReadDTO>();
             if (chat.Messages.Any())
             {
