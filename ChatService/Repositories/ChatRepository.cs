@@ -13,7 +13,7 @@ namespace ChatService.Repositories
         public async Task<ResponseResult> CreateChat(Chat chat, string externalUserId)
         {
             var dbContext = await dbContextFactory.CreateDbContextAsync();
-            var userFound = await dbContext.AppUsers.FirstAsync(user=>user.ExternalId ==  externalUserId);
+            var userFound = await dbContext.AppUsers.FirstOrDefaultAsync(user=>user.ExternalId ==  externalUserId);
             if (userFound == null) 
             { 
                 return new ResponseResult(false, "User Id not found"); 
