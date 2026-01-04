@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using Microsoft.AspNetCore.Identity;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -17,7 +10,7 @@ using UserService.DbContexts;
 using UserService.Models;
 using UserService.Service;
 
-namespace UserService.Test
+namespace UserService.Test.Service
 {
     public class TokenServiceTests
     {
@@ -29,25 +22,20 @@ namespace UserService.Test
 
         public TokenServiceTests()
         {
-            // SUT
             _configMock = new Mock<IConfiguration>();
             _configMock.Setup(c => c["JWT:SigningKey"]).Returns("super_secret_key_that_is_long_enough_for_sha256");
             _configMock.Setup(c => c["JWT:Issuer"]).Returns("test_issuer");
             _configMock.Setup(c => c["JWT:Audience"]).Returns("test_audience");
 
-            // 2. Mock UserManager (Identity boilerplate)
             var store = new Mock<IUserStore<AppUser>>();
             _userManagerMock = new Mock<UserManager<AppUser>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
 
-            // 3. Setup InMemory Database for DBContextFactory
             var options = new DbContextOptionsBuilder<UserDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
-
             var mockFactory = new Mock<IDbContextFactory<UserDbContext>>();
             mockFactory.Setup(f => f.CreateDbContextAsync(CancellationToken.None))
                 .ReturnsAsync(() => new UserDbContext(options));
-
             _dbContextFactory = mockFactory.Object;
 
             _tokenService = new TokenService(_configMock.Object, _userManagerMock.Object, _dbContextFactory);
@@ -65,7 +53,6 @@ namespace UserService.Test
 
             // Assert
             token.Should().NotBeNullOrEmpty();
-            // JWT format: header.payload.signature
             token.Split('.').Length.Should().Be(3);
         }
 
@@ -117,7 +104,7 @@ namespace UserService.Test
             // Arrange
             var userId = "user-to-delete";
             await using (var context = await _dbContextFactory.CreateDbContextAsync())
-            { 
+            {
                 context.UserTokens.Add(new UserToken { UserId = userId, RefreshToken = "token-123" });
                 await context.SaveChangesAsync();
             }
@@ -127,7 +114,7 @@ namespace UserService.Test
 
             // Assert
             result.Should().BeTrue();
-            using var checkContext = await _dbContextFactory.CreateDbContextAsync();
+            await using var checkContext = await _dbContextFactory.CreateDbContextAsync();
             checkContext.UserTokens.Any(t => t.UserId == userId).Should().BeFalse();
         }
     }

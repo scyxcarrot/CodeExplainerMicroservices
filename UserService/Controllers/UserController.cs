@@ -183,7 +183,7 @@ namespace UserService.Controllers
             var result = await userRepository.DeleteUser(userId);
             if (!result.Success)
             {
-                return BadRequest(result.Message);
+                return NotFound(result.Message);
             }
             return NoContent();
         }
